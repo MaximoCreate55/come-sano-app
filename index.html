@@ -7,54 +7,62 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Comic Sans MS', sans-serif; }
-        body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; }
-        .box { background: white; padding: 25px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
+        body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; padding-bottom: 110px; } /* Espacio abajo para que el botón no tape nada */
+        
+        .box { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
         h1 { font-size: 1.8rem; color: #d4a373; margin-bottom: 5px; }
-        p { font-size: 1rem; color: #606c38; font-weight: bold; margin-bottom: 15px; }
-        .btn-magico { display: block; width: 100%; background: #ffb703; color: #023047; padding: 18px; border-radius: 16px; font-size: 1.2rem; font-weight: 900; border: none; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 183, 3, 0.4); }
-        .grid-comparador { display: flex; gap: 20px; overflow-x: auto; width: 100%; max-width: 400px; padding: 10px 5px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        p { font-size: 1rem; color: #606c38; font-weight: bold; }
+        
+        /* BOTÓN ABAJO: Ergonómico para usar con una sola mano */
+        .contenedor-boton-fijo { position: fixed; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; padding: 0 20px; z-index: 999; }
+        .btn-magico { width: 100%; max-width: 360px; background: #ffb703; color: #023047; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: 900; border: 4px solid #023047; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        .btn-magico:active { transform: scale(0.95); }
+
+        /* Carrusel Dinámico */
+        .grid-comparador { display: flex; gap: 20px; overflow-x: auto; width: 100%; max-width: 400px; padding: 10px 5px; scroll-snap-type: x mandatory; }
         .grid-comparador::-webkit-scrollbar { display: none; }
-        .card-producto { background: #ffffff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 24px; display: flex; flex-direction: column; align-items: center; min-width: 100%; width: 100%; scroll-snap-align: center; border: 4px solid #ccc; }
+        
+        .card-producto { background: #ffffff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 24px; display: flex; flex-direction: column; align-items: center; min-width: 100%; width: 100%; scroll-snap-align: center; border: 4px solid #ccc; display: none; } /* Nacen ocultas hasta que escanees */
+        .card-producto.activo { display: flex; }
         .card-producto.verde { border-color: #2ec4b6; background-color: #f6fffb; }
         .card-producto.rojo { border-color: #e71d36; background-color: #fff5f5; }
-        .nombre-producto { font-size: 1.3rem; font-weight: bold; text-align: center; margin-bottom: 10px; }
-        .emoticon-indicador { font-size: 4rem; margin: 5px 0; animation: bounce 2s infinite; }
+        
+        .nombre-producto { font-size: 1.4rem; font-weight: bold; text-align: center; margin-bottom: 10px; color: #333; }
+        .emoticon-indicador { font-size: 4rem; margin: 5px 0; }
         .veredicto-texto { font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; padding: 5px 15px; border-radius: 12px; color: #fff; }
         .verde .veredicto-texto { background-color: #2ec4b6; }
         .rojo .veredicto-texto { background-color: #e71d36; }
-        .info-lista { list-style: none; font-size: 1rem; width: 100%; text-align: left; margin-bottom: 15px; }
-        .info-lista li { margin-bottom: 10px; padding-left: 25px; position: relative; line-height: 1.3; font-weight: 500; }
+        
+        .info-lista { list-style: none; font-size: 1rem; width: 100%; text-align: left; }
+        .info-lista li { margin-bottom: 10px; padding-left: 25px; position: relative; line-height: 1.4; font-weight: 500; }
         .info-lista li.pro::before { content: "✨"; position: absolute; left: 0; }
         .info-lista li.contra::before { content: "⚠️"; position: absolute; left: 0; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
     </style>
 </head>
 <body>
+
     <div class="box">
         <h1>🥕 CómeSanoApp 🍅</h1>
         <p>Conocé lo que comés</p>
-        <button class="btn-magico" onclick="abrirCamaraPro()">📷 ¡ESCANEAR PRODUCTO!</button>
     </div>
+
+    <!-- Carrusel donde se inyectará el resultado real de internet -->
     <div class="grid-comparador" id="carrusel">
-        <div class="card-producto verde" id="prod-fideos">
-            <div class="nombre-producto">Fettuccini Don Vicente</div>
-            <div class="emoticon-indicador">👍😃</div>
-            <div class="veredicto-texto">¡Súper Sano!</div>
-            <ul class="info-lista">
-                <li class="pro">¡Alimento real! Sin químicos raros.</li>
-                <li class="pro">Tiene espinaca de verdad.</li>
-            </ul>
-        </div>
-        <div class="card-producto rojo" id="prod-alfajor">
-            <div class="nombre-producto">Producto Escaneado 🍫</div>
-            <div class="emoticon-indicador">👎🤢</div>
-            <div class="veredicto-texto">¡Ojo! Consumo Ocasional</div>
-            <ul class="info-lista">
-                <li class="contra">Alto contenido de azúcares refinados.</li>
-                <li class="contra">Tiene grasas trans ocultas.</li>
+        <div class="card-producto" id="tarjeta-resultado">
+            <div class="nombre-producto" id="res-nombre">Cargando producto...</div>
+            <div class="emoticon-indicador" id="res-emoticon">🤔</div>
+            <div class="veredicto-texto" id="res-veredicto">Analizando</div>
+            <ul class="info-lista" id="res-detalles">
+                <!-- Los detalles se crean solos acá -->
             </ul>
         </div>
     </div>
+
+    <!-- BOTÓN ABAJO DEL TODO: Fácil acceso con una mano -->
+    <div class="contenedor-boton-fijo">
+        <button class="btn-magico" onclick="abrirCamaraPro()">📷 ¡ESCANEAR AHORA!</button>
+    </div>
+
     <script>
         function abrirCamaraPro() {
             var ventanaCamara = window.open();
@@ -73,7 +81,7 @@
                 </head>
                 <body>
                     <div id="camara"><div class="linea"></div></div>
-                    <div class="info">🍫 Escaneá el código de barras...</div>
+                    <div class="info">🔍 Apuntá al código de barras de cualquier alimento...</div>
                     <script>
                         Quagga.init({
                             inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#camara'), constraints: { facingMode: "environment" } },
@@ -95,13 +103,80 @@
             ventanaCamara.document.write(codigoHTML);
             ventanaCamara.document.close();
         }
+
+        // EL "CAÑO" DE DATOS: Escucha el código de barras y busca en internet
         window.addEventListener("message", function(event) {
             var codigoLeido = event.data;
-            if (codigoLeido) {
-                var tarjeta = document.getElementById("prod-alfajor");
-                tarjeta.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (!codigoLeido) return;
+
+            var tarjeta = document.getElementById("tarjeta-resultado");
+            var txtNombre = document.getElementById("res-nombre");
+            var txtEmoticon = document.getElementById("res-emoticon");
+            var txtVeredicto = document.getElementById("res-veredicto");
+            var listaDetalles = document.getElementById("res-detalles");
+
+            // Mostramos la tarjeta en modo "Cargando..."
+            tarjeta.className = "card-producto activo";
+            txtNombre.innerText = "Buscando en góndola digital...";
+
+            // Consultamos la API real de Open Food Facts Argentina
+            fetch(`https://ar.openfoodfacts.org/api/v2/product/${codigoLeido}.json`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 1 && data.product) {
+                        var producto = data.product;
+                        var nombreReal = producto.product_name || "Producto Desconocido";
+                        var marcas = producto.brands || "";
+                        
+                        txtNombre.innerText = marcas ? `${nombreReal} (${marcas})` : nombreReal;
+
+                        // LÓGICA DE FILTRADO CRIOLLO SIMPLIFICADA
+                        // Miramos cuántos sellos de advertencia tiene cargados
+                        var cantidadSellos = producto.nutriscore_grade || "c"; 
+                        var esUltraprocesado = producto.ingredients_text_with_allergens && 
+                            (producto.ingredients_text_with_allergens.toLowerCase().includes("jarabe") || 
+                             producto.ingredients_text_with_allergens.toLowerCase().includes("espesante") ||
+                             producto.ingredients_text_with_allergens.toLowerCase().includes("ins "));
+
+                        if (esUltraprocesado || cantidadSellos === 'd' || cantidadSellos === 'e') {
+                            // Respuesta para producto ROJO
+                            tarjeta.className = "card-producto activo rojo";
+                            txtEmoticon.innerText = "👎🤢";
+                            txtVeredicto.innerText = "¡Ojo! Consumo Ocasional";
+                            listaDetalles.innerHTML = `
+                                <li class="contra">Encontramos aditivos industriales o jarabes en su receta.</li>
+                                <li class="contra">La letra chica esconde ingredientes muy refinados.</li>
+                            `;
+                        } else {
+                            // Respuesta para producto VERDE
+                            tarjeta.className = "card-producto activo verde";
+                            txtEmoticon.innerText = "👍😃";
+                            txtVeredicto.innerText = "¡Súper Sano!";
+                            listaDetalles.innerHTML = `
+                                <li class="pro">Ingredientes limpios y cercanos a su estado natural.</li>
+                                <li class="pro">Pocos procesos industriales encima. ¡Aprobado!</li>
+                            `;
+                        }
+                    } else {
+                        // Si el producto no existe en la base de datos abierta
+                        tarjeta.className = "card-producto activo";
+                        txtEmoticon.innerText = "🤷‍♂️🧐";
+                        txtNombre.innerText = `Código: ${codigoLeido}`;
+                        txtVeredicto.innerText = "No Encontrado";
+                        txtVeredicto.style.backgroundColor = "#ccc";
+                        listaDetalles.innerHTML = `
+                            <li class="contra" style="list-style:none;">¡Uy! Este producto todavía no está en la base de datos nacional.</li>
+                            <li class="pro" style="list-style:none; margin-top:10px; font-weight:bold; color:#ffb703;">[Próximamente: Botón para dar de Alta]</li>
+                        `;
+                    }
+                    tarjeta.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                })
+                .catch(error => {
+                    txtNombre.innerText = "Error al conectar con el servidor.";
+                    console.error(error);
+                });
         });
     </script>
 </body>
 </html>
+ 
