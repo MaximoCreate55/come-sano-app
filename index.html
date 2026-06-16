@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CómeSanoApp</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Comic Sans MS', sans-serif; }
+        body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; }
+        .box { background: white; padding: 25px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
+        h1 { font-size: 1.8rem; color: #d4a373; margin-bottom: 5px; }
+        p { font-size: 1rem; color: #606c38; font-weight: bold; margin-bottom: 15px; }
+        .btn-magico { display: block; width: 100%; background: #ffb703; color: #023047; padding: 18px; border-radius: 16px; font-size: 1.2rem; font-weight: 900; border: none; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 183, 3, 0.4); }
+        .grid-comparador { display: flex; gap: 20px; overflow-x: auto; width: 100%; max-width: 400px; padding: 10px 5px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+        .grid-comparador::-webkit-scrollbar { display: none; }
+        .card-producto { background: #ffffff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 24px; display: flex; flex-direction: column; align-items: center; min-width: 100%; width: 100%; scroll-snap-align: center; border: 4px solid #ccc; }
+        .card-producto.verde { border-color: #2ec4b6; background-color: #f6fffb; }
+        .card-producto.rojo { border-color: #e71d36; background-color: #fff5f5; }
+        .nombre-producto { font-size: 1.3rem; font-weight: bold; text-align: center; margin-bottom: 10px; }
+        .emoticon-indicador { font-size: 4rem; margin: 5px 0; animation: bounce 2s infinite; }
+        .veredicto-texto { font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; padding: 5px 15px; border-radius: 12px; color: #fff; }
+        .verde .veredicto-texto { background-color: #2ec4b6; }
+        .rojo .veredicto-texto { background-color: #e71d36; }
+        .info-lista { list-style: none; font-size: 1rem; width: 100%; text-align: left; margin-bottom: 15px; }
+        .info-lista li { margin-bottom: 10px; padding-left: 25px; position: relative; line-height: 1.3; font-weight: 500; }
+        .info-lista li.pro::before { content: "✨"; position: absolute; left: 0; }
+        .info-lista li.contra::before { content: "⚠️"; position: absolute; left: 0; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🥕 CómeSanoApp 🍅</h1>
+        <p>Conocé lo que comés</p>
+        <button class="btn-magico" onclick="abrirCamaraPro()">📷 ¡ESCANEAR PRODUCTO!</button>
+    </div>
+    <div class="grid-comparador" id="carrusel">
+        <div class="card-producto verde" id="prod-fideos">
+            <div class="nombre-producto">Fettuccini Don Vicente</div>
+            <div class="emoticon-indicador">👍😃</div>
+            <div class="veredicto-texto">¡Súper Sano!</div>
+            <ul class="info-lista">
+                <li class="pro">¡Alimento real! Sin químicos raros.</li>
+                <li class="pro">Tiene espinaca de verdad.</li>
+            </ul>
+        </div>
+        <div class="card-producto rojo" id="prod-alfajor">
+            <div class="nombre-producto">Producto Escaneado 🍫</div>
+            <div class="emoticon-indicador">👎🤢</div>
+            <div class="veredicto-texto">¡Ojo! Consumo Ocasional</div>
+            <ul class="info-lista">
+                <li class="contra">Alto contenido de azúcares refinados.</li>
+                <li class="contra">Tiene grasas trans ocultas.</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        function abrirCamaraPro() {
+            var ventanaCamara = window.open();
+            var codigoHTML = `
+                <html>
+                <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"><\/script>
+                    <style>
+                        body { margin: 0; background: #000; font-family: sans-serif; color: white; text-align: center; }
+                        #camara { width: 100vw; height: 75vh; position: relative; }
+                        #camara video { width: 100%; height: 100%; object-fit: cover; }
+                        .linea { position: absolute; top: 50%; left: 5%; width: 90%; height: 2px; background: #e71d36; box-shadow: 0 0 8px #e71d36; }
+                        .info { padding: 20px; font-size: 1.2rem; font-weight: bold; background: #ffb703; color: #023047; }
+                    </style>
+                </head>
+                <body>
+                    <div id="camara"><div class="linea"></div></div>
+                    <div class="info">🍫 Escaneá el código de barras...</div>
+                    <script>
+                        Quagga.init({
+                            inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#camara'), constraints: { facingMode: "environment" } },
+                            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] }
+                        }, function(err) {
+                            if (err) { alert("Error: " + err); return; }
+                            Quagga.start();
+                        });
+                        Quagga.onDetected(function(data) {
+                            var codigo = data.codeResult.code;
+                            Quagga.stop();
+                            window.opener.postMessage(codigo, "*");
+                            window.close();
+                        });
+                    <\/script>
+                </body>
+                </html>
+            `;
+            ventanaCamara.document.write(codigoHTML);
+            ventanaCamara.document.close();
+        }
+        window.addEventListener("message", function(event) {
+            var codigoLeido = event.data;
+            if (codigoLeido) {
+                var tarjeta = document.getElementById("prod-alfajor");
+                tarjeta.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        });
+    </script>
+</body>
+</html>
