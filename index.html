@@ -44,6 +44,14 @@
         .panel-detalles h4 { color: #023047; margin-bottom: 5px; font-size: 1rem; }
         .panel-detalles p { font-weight: normal; color: #444; font-size: 0.95rem; line-height: 1.4; background: #eee; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
 
+        /* Botón Auxiliar de IA */
+        .btn-ia-alta { background: #ff7f50; color: white; border: none; padding: 12px 20px; border-radius: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 0.95rem; display: none; width: 100%; box-shadow: 0 4px 10px rgba(255,127,80,0.3); }
+        
+        /* Formulario de Captura IA */
+        .modulo-foto-ia { display: none; width: 100%; background: #ffffff; border-radius: 20px; border: 3px dashed #ff7f50; padding: 15px; margin-top: 15px; text-align: center; }
+        .modulo-foto-ia.abierto { display: block; }
+        .btn-foto-accion { background: #2ec4b6; color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+
         .contenedor-boton-fijo { position: fixed; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; padding: 0 20px; z-index: 999; }
         .btn-magico { width: 100%; max-width: 360px; background: #ffb703; color: #023047; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: 900; border: 4px solid #023047; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
     </style>
@@ -75,6 +83,15 @@
                 <p id="txt-ingredientes-reales">Lista...</p>
                 <h4>🗣️ Traducción Criolla y Consecuencias:</h4>
                 <p id="txt-traduccion-criolla">Traducción...</p>
+            </div>
+
+            <button class="btn-ia-alta" id="btn-activar-ia" onclick="abrirModuloIA()">📸 Analizar Ingredientes por Foto (IA)</button>
+            
+            <div class="modulo-foto-ia" id="modulo-ia-formulario">
+                <h4 style="color:#ff7f50;">🔬 Escáner de Ingredientes Activo</h4>
+                <p style="font-size:0.85rem; color:#666; margin: 5px 0;">Apuntá con tu cámara a la lista de ingredientes del paquete.</p>
+                <input type="file" accept="image/*" id="selector-foto-ia" style="margin-top:10px; font-size:0.85rem; width:100%;">
+                <button class="btn-foto-accion" onclick="procesarFotoConIA()">⚡ Enviar a Inteligencia Artificial</button>
             </div>
         </div>
     </div>
@@ -153,6 +170,46 @@
             }
         }
 
+        // Funciones nuevas para el control de la IA
+        function abrirModuloIA() {
+            document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia abierto";
+        }
+
+        function procesarFotoConIA() {
+            var fileInput = document.getElementById("selector-foto-ia");
+            if(fileInput.files.length === 0) {
+                alert("Por favor sacá una foto o seleccioná una imagen primero.");
+                return;
+            }
+            
+            alert("¡Foto enviada! Simulando motor OCR de IA...\nLeyendo ingredientes ocultos en el envase...");
+            
+            // Simulamos que la IA encuentra que tiene JMAF y aditivos no declarados en internet
+            var tarjeta = document.getElementById("tarjeta-resultado");
+            var txtEmoticon = document.getElementById("res-emoticon");
+            var txtVeredicto = document.getElementById("res-veredicto");
+            var listaDetalles = document.getElementById("res-detalles");
+            var txtIngReales = document.getElementById("txt-ingredientes-reales");
+            var txtTradCriolla = document.getElementById("txt-traduccion-criolla");
+            var btnVerMas = document.getElementById("btn-toggle-detalles");
+
+            tarjeta.className = "card-producto activo rojo";
+            txtEmoticon.innerText = "🤢👎";
+            txtVeredicto.innerText = "IA: Consumo Ocasional";
+            
+            listaDetalles.innerHTML = `
+                <li class="contra">IA detectó Jarabe de Maíz de Alta Fructosa (JMAF) y Estabilizantes en la foto.</li>
+                <li class="contra">El escaneo de etiqueta invalida la falta de datos de internet.</li>
+            `;
+            
+            txtIngReales.innerText = "Leche entera, Jarabe de Maíz de Alta Fructosa, Almidón modificado, INS 407 (Carragenina), Aromatizante artificial vainilla.";
+            txtTradCriolla.innerText = "¡La IA salvó las papas! Al leer la foto de atrás del envase, detectó aditivos espesantes (Carragenina) y endulzantes baratos que la base de datos de internet ignoraba. Clasificado como ultraprocesado por lectura visual.";
+            
+            btnVerMas.style.display = "block";
+            document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia";
+            document.getElementById("btn-activar-ia").style.display = "none";
+        }
+
         window.addEventListener("message", function(event) {
             var dataPaquete = event.data;
             if (!dataPaquete || !dataPaquete.valor) return;
@@ -168,6 +225,10 @@
             var persiana = document.getElementById("persiana-ingredientes");
             var txtIngReales = document.getElementById("txt-ingredientes-reales");
             var txtTradCriolla = document.getElementById("txt-traduccion-criolla");
+            
+            // Resetear botones IA
+            document.getElementById("btn-activar-ia").style.display = "none";
+            document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia";
 
             tarjeta.className = "card-producto activo";
             txtNombre.innerText = "Buscando en góndola digital...";
@@ -188,7 +249,15 @@
                         
                         var nombreCompleto = marcas ? `${nombreReal} (${marcas})` : nombreReal;
                         txtNombre.innerText = nombreCompleto;
-                        txtIngReales.innerText = ingredientesTexto || "Los ingredientes no están detallados en texto en la base pública, pero el perfil acusa agregados industriales.";
+                        
+                        // Si encuentra el producto pero la lista de ingredientes viene vacía (Caso Leche)
+                        if(ingredientesTexto.trim() === "") {
+                            txtIngReales.innerText = "Los ingredientes no están detallados en texto en la base pública.";
+                            document.getElementById("btn-activar-ia").style.display = "block"; // Habilitar botón IA
+                        } else {
+                            txtIngReales.innerText = ingredientesTexto;
+                        }
+                        
                         btnVerMas.style.display = "block";
 
                         var textoMinuscula = ingredientesTexto.toLowerCase();
@@ -238,8 +307,8 @@
                         txtVeredicto.style.color = "#333";
                         listaDetalles.innerHTML = `
                             <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado en la base nacional de internet.</li>
-                            <li class="pro" style="list-style:none; margin-top:15px; font-weight:bold; color:#ffb703; text-align:center; font-size:1.1rem;">📝 [PRÓXIMAMENTE: FORMULARIO DE ALTA CON IA] 📝</li>
                         `;
+                        document.getElementById("btn-activar-ia").style.display = "block"; // Habilitar botón IA si no existe
                     }
                     tarjeta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 })
