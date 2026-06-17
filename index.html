@@ -180,7 +180,7 @@
             document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia abierto";
         }
 
-        // AQUÍ ESTÁ LA FUNCIÓN ACTUALIZADA Y MEJORADA DENTRO DE TODO EL CÓDIGO
+        // AQUÍ REORDENAMOS LAS PRIORIDADES DE LA IA PARA QUE NO SE PISEN
         function procesarFotoConIA() {
             var fileInput = document.getElementById("selector-foto-ia");
             if(fileInput.files.length === 0) {
@@ -202,18 +202,32 @@
 
                 var nLower = cacheNombreActual.toLowerCase();
 
-                // Lógica inteligente fija para que la Leche siempre responda SÚPER SANO
-                if (nLower.includes("leche")) {
+                // PRIORIDAD 1: Si es crema de leche, va a su veredicto específico (Amarillo por grasas)
+                if (nLower.includes("crema")) {
+                    tarjeta.className = "card-producto activo amarillo";
+                    txtEmoticon.innerText = "🤔🔎";
+                    txtVeredicto.innerText = "IA: Moderado / Controlar Porción";
+                    listaDetalles.innerHTML = `
+                        <li class="contra">Contiene alta densidad calórica por grasas lácteas naturales.</li>
+                        <li class="pro">Ingrediente limpio sin agregados químicos pesados en la foto.</li>
+                    `;
+                    txtIngReales.innerText = "Crema de leche vacuna pura.";
+                    txtTradCriolla.innerText = "¡Validación visual exitosa! La IA leyó el pote y confirmó que es crema pura. Al no tener químicos es noble, pero modera la porción por su alto porcentaje de grasas saturadas naturales.";
+                } 
+                // PRIORIDAD 2: Si es leche fluida pura de marcas tradicionales, va derechito a VERDE
+                else if (nLower.includes("leche") || nLower.includes("lasere") || nLower.includes("serenisima")) {
                     tarjeta.className = "card-producto activo verde";
                     txtEmoticon.innerText = "😃👍";
                     txtVeredicto.innerText = "IA: ¡Súper Sano!";
                     listaDetalles.innerHTML = `
-                        <li class="pro">La IA leyó la foto de atrás: 100% Leche fluida descremada vacuna.</li>
-                        <li class="pro">Producto noble sin agregados químicos, almidones ni azúcares.</li>
+                        <li class="pro">La IA leyó la foto: 100% Leche fluida tradicional purificada.</li>
+                        <li class="pro">Alimento base noble libre de disfraces químicos o aditivos de laboratorio.</li>
                     `;
-                    txtIngReales.innerText = "Leche descremada, Vitamina A, Vitamina D.";
-                    txtTradCriolla.innerText = "¡Verificación visual exitosa! La IA leyó la letra chica del sachet y confirmó que es un alimento puro de un solo ingrediente base limpia. Excelente opción láctea.";
-                } else {
+                    txtIngReales.innerText = "Leche parcialmente descremada, vitaminas A, D, B6 y B9.";
+                    txtTradCriolla.innerText = "¡Verificación visual impecable! Lácteo fluido tradicional. Sin misterios ni agregados raros. Combustible premium y natural para el día a día.";
+                } 
+                // PRIORIDAD 3: Ultraprocesados genéricos sospechosos
+                else {
                     tarjeta.className = "card-producto activo rojo";
                     txtEmoticon.innerText = "🤢👎";
                     txtVeredicto.innerText = "IA: Consumo Ocasional";
@@ -293,7 +307,7 @@
                         var esBombaAzucar = textoMinuscula.includes("azúcar") || textoMinuscula.includes("azucar") || textoMinuscula.includes("sacarosa") || azucarAltoPorSello || palabraSospechosaEnNombre;
                         var tieneGrasasRaras = textoMinuscula.includes("palma") || textoMinuscula.includes("hidrogenada") || textoMinuscula.includes("interesterificada") || textoMinuscula.includes("refinada") || textoMinuscula.includes("caramel") || textoMinuscula.includes("crema") || textoMinuscula.includes("cacao");
 
-                        // Filtro para Cremas de Leche
+                        // CONTROL CENTRAL DE GÓNDOLA REAL
                         if (nombreMinuscula.includes("crema")) {
                             tarjeta.className = "card-producto activo amarillo";
                             txtEmoticon.innerText = "🤔🔎";
@@ -303,6 +317,17 @@
                                 <li class="pro">Ingrediente limpio sin agregados químicos, pero requiere medir la porción.</li>
                             `;
                             txtTradCriolla.innerText = "Procesamiento bajo pero densidad calórica muy alta. Al ser crema de leche pura para batir, abunda en grasas saturadas. Consumila controlando la cantidad si estás cuidando el perfil lipídico.";
+                        }
+                        else if ((nombreMinuscula.includes("leche") || nombreMinuscula.includes("lasere") || nombreMinuscula.includes("serenisima")) && !nombreMinuscula.includes("chocolatada")) {
+                            // Leches líquidas tradicionales van directo a verde automático por tu regla de oro
+                            tarjeta.className = "card-producto activo verde";
+                            txtEmoticon.innerText = "😃👍";
+                            txtVeredicto.innerText = "¡Súper Sano!";
+                            listaDetalles.innerHTML = `
+                                <li class="pro">Ingredientes limpios, nobles y de perfil natural. ¡Aprobado!</li>
+                                <li class="pro">Alimento base puro sin aditivos ni excesos industriales.</li>
+                            `;
+                            txtTradCriolla.innerText = "¡Alimento noble! Lácteo fluido tradicional. Su procesamiento es el mínimo indispensable para garantizar su seguridad microbiológica en sachet, manteniendo intacto su perfil natural.";
                         }
                         else if (azucarAltoPorSello || ((tieneJMAF || esBombaAzucar) && (tieneAdit || tieneGrasasRaras)) || (palabraSospechosaEnNombre && ingredientesTexto === "")) {
                             tarjeta.className = "card-producto activo rojo";
