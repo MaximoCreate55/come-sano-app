@@ -14,9 +14,9 @@
         p { font-size: 1rem; color: #606c38; font-weight: bold; }
         
         /* Entrada Manual */
-        .caja-manual { width: 100%; max-width: 400px; background: white; border-radius: 16px; padding: 12px; margin-bottom: 15px; border: 2px dashed #606c38; text-align: center; }
-        .input-codigo { padding: 8px; border-radius: 8px; border: 2px solid #ccc; width: 60%; font-size: 0.9rem; text-align: center; }
-        .btn-manual { background: #606c38; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .caja-manual { width: 100%; max-width: 400px; background: white; border-radius: 16px; padding: 12px; margin-bottom: 15px; border: 2px solid #d4a373; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .input-codigo { padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 65%; font-size: 1rem; text-align: center; font-weight: bold; color: #023047; }
+        .btn-manual { background: #023047; color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-left: 5px; }
 
         /* Tarjeta de Resultado */
         .grid-comparador { width: 100%; max-width: 400px; padding: 10px 5px; }
@@ -56,8 +56,8 @@
     </div>
 
     <div class="caja-manual">
-        <label style="font-size:0.85rem; color:#606c38; font-weight:bold; display:block; margin-bottom:5px;">¿Paquete curvo o difícil? Escribí el número:</label>
-        <input type="number" id="input-manual" class="input-codigo" placeholder="Ej: 77918512">
+        <label style="font-size:0.85rem; color:#606c38; font-weight:bold; display:block; margin-bottom:6px;">¿Paquete curvo, roto o difícil? Código acá:</label>
+        <input type="number" id="input-manual" class="input-codigo" placeholder="Ej: 7791337007260">
         <button class="btn-manual" onclick="buscarCodigoManual()">Buscar</button>
     </div>
 
@@ -119,7 +119,6 @@
                         });
                         Quagga.onDetected(function(data) {
                             var codigo = data.codeResult.code;
-                            // La cámara sigue exigiendo códigos largos para evitar ruido visual
                             if (codigo.length < 12) return; 
                             Quagga.stop();
                             window.opener.postMessage({tipo: "camara", valor: codigo}, "*");
@@ -136,7 +135,6 @@
         function buscarCodigoManual() {
             var num = document.getElementById("input-manual").value;
             if (num.trim().length >= 7) {
-                // El buscador manual tiene pase libre directo (tipo: "manual")
                 window.postMessage({tipo: "manual", valor: num.trim()}, "*");
             } else {
                 alert("Por favor ingresá un número de código válido.");
@@ -196,42 +194,47 @@
                         var textoMinuscula = ingredientesTexto.toLowerCase();
                         var nombreMinuscula = nombreCompleto.toLowerCase();
                         
-                        var palabraSospechosaEnNombre = nombreMinuscula.includes("alfajor") || nombreMinuscula.includes("milka") || nombreMinuscula.includes("oreo") || nombreMinuscula.includes("pastillas") || nombreMinuscula.includes("caramelo") || nombreMinuscula.includes("chocolate") || nombreMinuscula.includes("drf") || nombreMinuscula.includes("menta");
+                        // DICIONARIO AMPLIADO DE PALABRAS SOSPECHOSAS (Parche contra registros vacíos de internet)
+                        var palabraSospechosaEnNombre = nombreMinuscula.includes("alfajor") || nombreMinuscula.includes("milka") || nombreMinuscula.includes("oreo") || nombreMinuscula.includes("pastillas") || nombreMinuscula.includes("caramelo") || nombreMinuscula.includes("chocolate") || nombreMinuscula.includes("drf") || nombreMinuscula.includes("menta") || nombreMinuscula.includes("cindor") || nombreMinuscula.includes("chocolatada") || nombreMinuscula.includes("dulce") || nombreMinuscula.includes("bizcocho");
 
                         var tieneJMAF = textoMinuscula.includes("jarabe") || textoMinuscula.includes("fructosa");
-                        var tieneAdit = textoMinuscula.includes("ins ") || textoMinuscula.includes("saboriz") || textoMinuscula.includes("resaltador") || textoMinuscula.includes("emulsionante") || textoMinuscula.includes("estabilizante") || textoMinuscula.includes("polirricinoleato") || textoMinuscula.includes("lecitina") || textoMinuscula.includes("espesante");
+                        var tieneAdit = textoMinuscula.includes("ins ") || textoMinuscula.includes("saboriz") || textoMinuscula.includes("resaltador") || textoMinuscula.includes("emulsionante") || textoMinuscula.includes("estabilizante") || textoMinuscula.includes("polirricinoleato") || textoMinuscula.includes("lecitina") || textoMinuscula.includes("espesante") || textoMinuscula.includes("carragenina");
                         var esBombaAzucar = textoMinuscula.includes("azúcar") || textoMinuscula.includes("azucar") || textoMinuscula.includes("sacarosa") || azucarAltoPorSello || palabraSospechosaEnNombre;
-                        var tieneGrasasRaras = textoMinuscula.includes("palma") || textoMinuscula.includes("hidrogenada") || textoMinuscula.includes("interesterificada") || textoMinuscula.includes("refinada") || textoMinuscula.includes("caramel") || textoMinuscula.includes("crema");
+                        var tieneGrasasRaras = textoMinuscula.includes("palma") || textoMinuscula.includes("hidrogenada") || textoMinuscula.includes("interesterificada") || textoMinuscula.includes("refinada") || textoMinuscula.includes("caramel") || textoMinuscula.includes("crema") || textoMinuscula.includes("cacao");
 
                         if (azucarAltoPorSello || ((tieneJMAF || esBombaAzucar) && (tieneAdit || tieneGrasasRaras)) || (palabraSospechosaEnNombre && ingredientesTexto === "")) {
+                            // ROJO
                             tarjeta.className = "card-producto activo rojo";
                             txtEmoticon.innerText = "🤢👎";
                             txtVeredicto.innerText = "¡Ojo! Consumo Ocasional";
                             listaDetalles.innerHTML = `
-                                <li class="contra">Advertencia por perfil de golosina o exceso de azúcares refinados.</li>
-                                <li class="contra">Contiene grasas trans, aceites industriales o aditivos de sabor.</li>
+                                <li class="contra">Advertencia por perfil del producto o exceso detectado de azúcares/grasas.</li>
+                                <li class="contra">Contiene agregados de laboratorio, azúcares libres o grasas trans.</li>
                             `;
-                            txtTradCriolla.innerText = "Este producto está clasificado como ultraprocesado/golosina. Ya sea por su nombre oficial o por su registro de sellos, queda en evidencia que es una bomba de azúcares refinados y grasas modificadas para el paladar. Consumilo de forma muy medida.";
+                            txtTradCriolla.innerText = "Este producto está catalogado en zona roja de ultraprocesados. Ya sea por su nombre directo o por alertas del servidor, queda claro que abusa de azúcares libres, aromatizantes o grasas saturadas destinadas a estirar su fecha de vencimiento. Consumilo con mucha moderación.";
                         } else if (esBombaAzucar || tieneAdit || tieneGrasasRaras) {
+                            // AMARILLO
                             tarjeta.className = "card-producto activo amarillo";
                             txtEmoticon.innerText = "🤔🔎 🤷‍♂️";
                             txtVeredicto.innerText = "Moderado / Intermedio";
                             listaDetalles.innerHTML = `
-                                <li class="contra">Contiene agregados industriales para consistencia o dulzor.</li>
-                                <li class="pro">Mejor que un ultraprocesado puro, pero requiere control de porción.</li>
+                                <li class="contra">Contiene componentes industriales para espesar, estabilizar o endulzar.</li>
+                                <li class="pro">Mejor perfil que un ultraprocesado puro, pero requiere medir la porción.</li>
                             `;
-                            txtTradCriolla.innerText = "Tiene un procesamiento intermedio. Incorpora azúcares o aditivos comunes de la industria para mantener el sabor y la conservación en la góndola. No es dañino para porciones chicas.";
+                            txtTradCriolla.innerText = "Procesamiento intermedio. Aunque incorpora lácteos o harinas base, añade azúcares o aditivos para lograr consistencia comercial en góndola. Apto para consumos esporádicos.";
                         } else {
+                            // VERDE
                             tarjeta.className = "card-producto activo verde";
                             txtEmoticon.innerText = "😃👍";
                             txtVeredicto.innerText = "¡Súper Sano!";
                             listaDetalles.innerHTML = `
                                 <li class="pro">Ingredientes limpios, nobles y de perfil natural. ¡Aprobado!</li>
-                                <li class="pro">Sin excesos de azúcares refinados ni químicos ocultos.</li>
+                                <li class="pro">Alimento sin excesos ocultos ni químicos de laboratorio.</li>
                             `;
-                            txtTradCriolla.innerText = "¡Alimento noble! Sus componentes están balanceados y cercanos a la comida real de cocina, sin trampas de laboratorio para generar dependencia de sabor.";
+                            txtTradCriolla.innerText = "¡Alimento noble! Sus componentes están balanceados, sin disfraces químicos para engañar al paladar o generar dependencia del sabor.";
                         }
                     } else {
+                        // NO REGISTRADO
                         tarjeta.className = "card-producto activo";
                         txtEmoticon.innerText = "🤷‍♂️❓";
                         txtNombre.innerText = `Código: ${codigoLeido}`;
@@ -239,8 +242,8 @@
                         txtVeredicto.style.backgroundColor = "#ccc";
                         txtVeredicto.style.color = "#333";
                         listaDetalles.innerHTML = `
-                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado en la base nacional.</li>
-                            <li class="pro" style="list-style:none; margin-top:15px; font-weight:bold; color:#ffb703; text-align:center; font-size:1.1rem;">✨ [PRÓXIMAMENTE: BOTÓN PARA DAR DE ALTA] ✨</li>
+                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado en la base nacional de internet.</li>
+                            <li class="pro" style="list-style:none; margin-top:15px; font-weight:bold; color:#ffb703; text-align:center; font-size:1.1rem;">📝 [PRÓXIMAMENTE: FORMULARIO DE ALTA CON IA] 📝</li>
                         `;
                     }
                     tarjeta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
