@@ -6,69 +6,248 @@
     <title>CómeSanoApp</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: #fdfaf0; min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; padding-bottom: 120px; }
-        .box { background: white; padding: 20px; border-radius: 24px; border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
-        .caja-manual { width: 100%; max-width: 400px; background: white; padding: 15px; border-radius: 16px; border: 2px solid #d4a373; margin-bottom: 20px; display: flex; gap: 5px; }
-        input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
-        .btn-manual { background: #023047; color: white; padding: 10px; border: none; border-radius: 8px; }
-        .card-producto { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 20px; border: 3px solid #ccc; display: none; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Comic Sans MS', sans-serif; }
+        body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; padding-bottom: 140px; }
+        
+        .box { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
+        h1 { font-size: 1.8rem; color: #d4a373; margin-bottom: 5px; }
+        p { font-size: 1rem; color: #606c38; font-weight: bold; }
+        
+        /* Entrada Manual */
+        .caja-manual { width: 100%; max-width: 400px; background: white; border-radius: 16px; padding: 12px; margin-bottom: 15px; border: 2px solid #d4a373; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .input-codigo { padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 65%; font-size: 1rem; text-align: center; font-weight: bold; color: #023047; }
+        .btn-manual { background: #023047; color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-left: 5px; }
+
+        /* Tarjeta de Resultado */
+        .grid-comparador { width: 100%; max-width: 400px; padding: 10px 5px; }
+        .card-producto { background: #ffffff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 24px; display: flex; flex-direction: column; align-items: center; width: 100%; border: 4px solid #ccc; display: none; }
         .card-producto.activo { display: flex; }
-        .modal-alta { display: none; width: 100%; max-width: 400px; background: #fff5f5; padding: 20px; border-radius: 20px; border: 2px solid #e71d36; }
-        .btn-grande { position: fixed; bottom: 20px; width: 90%; max-width: 360px; background: #ffb703; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: 900; border: 3px solid #023047; cursor:pointer; }
+        .card-producto.verde { border-color: #2ec4b6; background-color: #f6fffb; }
+        .card-producto.amarillo { border-color: #ffb703; background-color: #fffdf5; }
+        .card-producto.rojo { border-color: #e71d36; background-color: #fff5f5; }
+        
+        .nombre-producto { font-size: 1.4rem; font-weight: bold; text-align: center; margin-bottom: 10px; color: #333; }
+        .emoticon-indicador { font-size: 3.5rem; margin: 5px 0; }
+        .veredicto-texto { font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; padding: 5px 15px; border-radius: 12px; color: #fff; }
+        .verde .veredicto-texto { background-color: #2ec4b6; }
+        .amarillo .veredicto-texto { background-color: #ffb703; color: #023047; }
+        .rojo .veredicto-texto { background-color: #e71d36; }
+        
+        .info-lista { list-style: none; font-size: 1rem; width: 100%; text-align: left; margin-bottom: 15px; }
+        .info-lista li { margin-bottom: 10px; padding-left: 25px; position: relative; line-height: 1.4; font-weight: 500; }
+        .info-lista li.pro::before { content: "✨"; position: absolute; left: 0; }
+        .info-lista li.contra::before { content: "⚠️"; position: absolute; left: 0; }
+
+        .btn-ver-mas { background: #023047; color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 0.9rem; }
+        .panel-detalles { display: none; width: 100%; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #ccc; text-align: left; }
+        .panel-detalles.abierto { display: block; }
+        .panel-detalles h4 { color: #023047; margin-bottom: 5px; font-size: 1rem; }
+        .panel-detalles p { font-weight: normal; color: #444; font-size: 0.95rem; line-height: 1.4; background: #eee; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+
+        .contenedor-boton-fijo { position: fixed; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; padding: 0 20px; z-index: 999; }
+        .btn-magico { width: 100%; max-width: 360px; background: #ffb703; color: #023047; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: 900; border: 4px solid #023047; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <div class="box"><h1>🥕 CómeSanoApp 🍅</h1></div>
+    <div class="box">
+        <h1>🥕 CómeSanoApp 🍅</h1>
+        <p>Conocé lo que comés</p>
+    </div>
 
     <div class="caja-manual">
-        <input type="number" id="input-manual" placeholder="Código de barras...">
-        <button class="btn-manual" onclick="procesar(document.getElementById('input-manual').value)">Buscar</button>
+        <label style="font-size:0.85rem; color:#606c38; font-weight:bold; display:block; margin-bottom:6px;">¿Paquete curvo, roto o difícil? Código acá:</label>
+        <input type="number" id="input-manual" class="input-codigo" placeholder="Ej: 7791337007260">
+        <button class="btn-manual" onclick="buscarCodigoManual()">Buscar</button>
     </div>
 
-    <div id="res-card" class="card-producto">
-        <h2 id="res-nombre" style="margin-bottom:10px;"></h2>
-        <div id="res-msg"></div>
-        <button id="btn-alta" style="display:none; background:#d4a373; color:white; padding:10px; border:none; border-radius:10px; margin-top:15px;" onclick="document.getElementById('modal-alta').style.display='flex'">➕ DAR DE ALTA</button>
+    <div class="grid-comparador">
+        <div class="card-producto" id="tarjeta-resultado">
+            <div class="nombre-producto" id="res-nombre">Cargando...</div>
+            <div class="emoticon-indicador" id="res-emoticon">🤔🔎</div>
+            <div class="veredicto-texto" id="res-veredicto">Analizando</div>
+            
+            <ul class="info-lista" id="res-detalles"></ul>
+
+            <button class="btn-ver-mas" id="btn-toggle-detalles" onclick="togglePersiana()" style="display:none;">👁️ Ver Letra Chica</button>
+            <div class="panel-detalles" id="persiana-ingredientes">
+                <h4>🔬 Ingredientes Reales:</h4>
+                <p id="txt-ingredientes-reales">Lista...</p>
+                <h4>🗣️ Traducción Criolla y Consecuencias:</h4>
+                <p id="txt-traduccion-criolla">Traducción...</p>
+            </div>
+        </div>
     </div>
 
-    <div id="modal-alta" class="modal-alta">
-        <h3>📝 Registrar Producto</h3>
-        <input type="text" id="alta-nom" placeholder="Nombre" style="width:100%; margin:5px 0;">
-        <textarea id="alta-ing" placeholder="Ingredientes" style="width:100%; margin:5px 0;"></textarea>
-        <button onclick="alert('Guardado!')" style="background:#2ec4b6; color:white; padding:10px; width:100%; border:none;">Registrar</button>
+    <div class="contenedor-boton-fijo">
+        <button class="btn-magico" onclick="abrirCamaraPro()">📷 ¡ESCANEAR AHORA!</button>
     </div>
-
-    <button class="btn-grande" onclick="abrirCamara()">📷 ¡ESCANEAR!</button>
 
     <script>
-        function abrirCamara() {
-            var v = window.open("", "_blank");
-            v.document.write(`<html><head><style>body{margin:0;background:black;} #camara{width:100%;height:100%;} .visor{position:absolute;top:30%;left:10%;width:80%;height:40%;border:4px solid red;z-index:99;box-shadow:0 0 0 999px rgba(0,0,0,0.5);}</style></head><body><div id="camara"><div class="visor"></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"><\/script><script>Quagga.init({inputStream:{type:"LiveStream",target:document.querySelector('#camara'),constraints:{facingMode:"environment"},area:{top:"30%",right:"10%",left:"10%",bottom:"30%"}},decoder:{readers:["ean_reader"]}},(e)=>{if(!e)Quagga.start()});Quagga.onDetected((d)=>{if(d.codeResult.code.length>=12){window.opener.postMessage(d.codeResult.code,"*");window.close();}})<\/script></body></html>`);
+        function abrirCamaraPro() {
+            var ventanaCamara = window.open();
+            var codigoHTML = `
+                <html>
+                <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"><\/script>
+                    <style>
+                        body { margin: 0; background: #000; font-family: sans-serif; color: white; text-align: center; overflow: hidden; }
+                        #camara { width: 100vw; height: 75vh; position: relative; }
+                        #camara video { width: 100%; height: 100%; object-fit: cover; }
+                        .visor-enfoque { position: absolute; top: 50%; left: 50%; width: 280px; height: 140px; margin-top: -70px; margin-left: -140px; border: 4px solid #e71d36; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); z-index: 10; pointer-events: none; }
+                        .linea-guia { position: absolute; top: 50%; left: 5%; width: 90%; height: 2px; background: #e71d36; box-shadow: 0 0 8px #e71d36; }
+                        .info { padding: 20px; font-size: 1.1rem; font-weight: bold; background: #ffb703; color: #023047; height: 25vh; }
+                    </style>
+                </head>
+                <body>
+                    <div id="camara">
+                        <div class="visor-enfoque"><div class="linea-guia"></div></div>
+                    </div>
+                    <div class="info">🎯 Poné el código de barras ÚNICAMENTE adentro del recuadro rojo.</div>
+                    <script>
+                        Quagga.init({
+                            inputStream: { 
+                                name: "Live", type: "LiveStream", target: document.querySelector('#camara'), 
+                                constraints: { facingMode: "environment" },
+                                area: { top: "30%", right: "10%", left: "10%", bottom: "30%" }
+                            },
+                            decoder: { readers: ["ean_reader"] }
+                        }, function(err) {
+                            if (err) { alert("Error de cámara: " + err); return; }
+                            Quagga.start();
+                        });
+                        Quagga.onDetected(function(data) {
+                            var codigo = data.codeResult.code;
+                            if (codigo.length < 12) return; 
+                            Quagga.stop();
+                            window.opener.postMessage({tipo: "camara", valor: codigo}, "*");
+                            window.close();
+                        });
+                    <\/script>
+                </body>
+                </html>
+            `;
+            ventanaCamara.document.write(codigoHTML);
+            ventanaCamara.document.close();
         }
 
-        window.addEventListener("message", (e) => { procesar(e.data); });
+        function buscarCodigoManual() {
+            var num = document.getElementById("input-manual").value;
+            if (num.trim().length >= 7) {
+                window.postMessage({tipo: "manual", valor: num.trim()}, "*");
+            } else {
+                alert("Por favor ingresá un número de código válido.");
+            }
+        }
 
-        function procesar(codigo) {
-            document.getElementById('res-card').className = "card-producto activo";
-            document.getElementById('res-nombre').innerText = "Buscando...";
-            document.getElementById('btn-alta').style.display = "none";
-            document.getElementById('modal-alta').style.display = "none";
+        function togglePersiana() {
+            var p = document.getElementById("persiana-ingredientes");
+            var b = document.getElementById("btn-toggle-detalles");
+            if (p.className === "panel-detalles") {
+                p.className = "panel-detalles abierto";
+                b.innerText = "🙈 Ocultar Detalles";
+            } else {
+                p.className = "panel-detalles";
+                b.innerText = "👁️ Ver Letra Chica";
+            }
+        }
 
-            fetch(`https://ar.openfoodfacts.org/api/v2/product/${codigo}.json`)
-                .then(r => r.json())
+        window.addEventListener("message", function(event) {
+            var dataPaquete = event.data;
+            if (!dataPaquete || !dataPaquete.valor) return;
+
+            var codigoLeido = dataPaquete.valor;
+
+            var tarjeta = document.getElementById("tarjeta-resultado");
+            var txtNombre = document.getElementById("res-nombre");
+            var txtEmoticon = document.getElementById("res-emoticon");
+            var txtVeredicto = document.getElementById("res-veredicto");
+            var listaDetalles = document.getElementById("res-detalles");
+            var btnVerMas = document.getElementById("btn-toggle-detalles");
+            var persiana = document.getElementById("persiana-ingredientes");
+            var txtIngReales = document.getElementById("txt-ingredientes-reales");
+            var txtTradCriolla = document.getElementById("txt-traduccion-criolla");
+
+            tarjeta.className = "card-producto activo";
+            txtNombre.innerText = "Buscando en góndola digital...";
+            btnVerMas.style.display = "none";
+            persiana.className = "panel-detalles";
+
+            fetch(`https://ar.openfoodfacts.org/api/v2/product/${codigoLeido}.json`)
+                .then(response => response.json())
                 .then(data => {
-                    if (data.status === 1 && data.product) {
-                        document.getElementById('res-nombre').innerText = data.product.product_name || "Producto encontrado";
-                        document.getElementById('res-msg').innerText = "✅ Producto hallado con éxito.";
+                    if (data.status === 1 && data.product && data.product.product_name && data.product.product_name.trim() !== "") {
+                        var producto = data.product;
+                        var nombreReal = producto.product_name;
+                        var marcas = producto.brands || "";
+                        var ingredientesTexto = producto.ingredients_text_es || producto.ingredients_text || "";
+                        
+                        var notaNutricional = producto.nutriscore_grade || "";
+                        var azucarAltoPorSello = (notaNutricional === 'd' || notaNutricional === 'e');
+                        
+                        var nombreCompleto = marcas ? `${nombreReal} (${marcas})` : nombreReal;
+                        txtNombre.innerText = nombreCompleto;
+                        txtIngReales.innerText = ingredientesTexto || "Los ingredientes no están detallados en texto en la base pública, pero el perfil acusa agregados industriales.";
+                        btnVerMas.style.display = "block";
+
+                        var textoMinuscula = ingredientesTexto.toLowerCase();
+                        var nombreMinuscula = nombreCompleto.toLowerCase();
+                        
+                        var palabraSospechosaEnNombre = nombreMinuscula.includes("alfajor") || nombreMinuscula.includes("milka") || nombreMinuscula.includes("oreo") || nombreMinuscula.includes("pastillas") || nombreMinuscula.includes("caramelo") || nombreMinuscula.includes("chocolate") || nombreMinuscula.includes("drf") || nombreMinuscula.includes("menta") || nombreMinuscula.includes("cindor") || nombreMinuscula.includes("chocolatada") || nombreMinuscula.includes("dulce") || nombreMinuscula.includes("bizcocho");
+
+                        var tieneJMAF = textoMinuscula.includes("jarabe") || textoMinuscula.includes("fructosa");
+                        var tieneAdit = textoMinuscula.includes("ins ") || textoMinuscula.includes("saboriz") || textoMinuscula.includes("resaltador") || textoMinuscula.includes("emulsionante") || textoMinuscula.includes("estabilizante") || textoMinuscula.includes("polirricinoleato") || textoMinuscula.includes("lecitina") || textoMinuscula.includes("espesante") || textoMinuscula.includes("carragenina");
+                        var esBombaAzucar = textoMinuscula.includes("azúcar") || textoMinuscula.includes("azucar") || textoMinuscula.includes("sacarosa") || azucarAltoPorSello || palabraSospechosaEnNombre;
+                        var tieneGrasasRaras = textoMinuscula.includes("palma") || textoMinuscula.includes("hidrogenada") || textoMinuscula.includes("interesterificada") || textoMinuscula.includes("refinada") || textoMinuscula.includes("caramel") || textoMinuscula.includes("crema") || textoMinuscula.includes("cacao");
+
+                        if (azucarAltoPorSello || ((tieneJMAF || esBombaAzucar) && (tieneAdit || tieneGrasasRaras)) || (palabraSospechosaEnNombre && ingredientesTexto === "")) {
+                            tarjeta.className = "card-producto activo rojo";
+                            txtEmoticon.innerText = "🤢👎";
+                            txtVeredicto.innerText = "¡Ojo! Consumo Ocasional";
+                            listaDetalles.innerHTML = `
+                                <li class="contra">Advertencia por perfil del producto o exceso detectado de azúcares/grasas.</li>
+                                <li class="contra">Contiene agregados de laboratorio, azúcares libres o grasas trans.</li>
+                            `;
+                            txtTradCriolla.innerText = "Este producto está catalogado en zona roja de ultraprocesados. Ya sea por su nombre directo o por alertas del servidor, queda claro que abusa de azúcares libres, aromatizantes o grasas saturadas destinadas a estirar su fecha de vencimiento. Consumilo con mucha moderación.";
+                        } else if (esBombaAzucar || tieneAdit || tieneGrasasRaras) {
+                            tarjeta.className = "card-producto activo amarillo";
+                            txtEmoticon.innerText = "🤔🔎";
+                            txtVeredicto.innerText = "Moderado / Intermedio";
+                            listaDetalles.innerHTML = `
+                                <li class="contra">Contiene componentes industriales para espesar, estabilizar o endulzar.</li>
+                                <li class="pro">Mejor perfil que un ultraprocesado puro, pero requiere medir la porción.</li>
+                            `;
+                            txtTradCriolla.innerText = "Procesamiento intermedio. Aunque incorpora lácteos o harinas base, añade azúcares o aditivos para lograr consistencia comercial en góndola. Apto para consumos esporádicos.";
+                        } else {
+                            tarjeta.className = "card-producto activo verde";
+                            txtEmoticon.innerText = "😃👍";
+                            txtVeredicto.innerText = "¡Súper Sano!";
+                            listaDetalles.innerHTML = `
+                                <li class="pro">Ingredientes limpios, nobles y de perfil natural. ¡Aprobado!</li>
+                                <li class="pro">Alimento sin excesos ocultos ni químicos de laboratorio.</li>
+                            `;
+                            txtTradCriolla.innerText = "¡Alimento noble! Sus componentes están balanceados, sin disfraces químicos para engañar al paladar o generar dependencia del sabor.";
+                        }
                     } else {
-                        document.getElementById('res-nombre').innerText = "No encontrado";
-                        document.getElementById('res-msg').innerText = "Este código no figura en la base nacional.";
-                        document.getElementById('btn-alta').style.display = "block";
+                        tarjeta.className = "card-producto activo";
+                        txtEmoticon.innerText = "🤷‍♂️❓";
+                        txtNombre.innerText = `Código: ${codigoLeido}`;
+                        txtVeredicto.innerText = "No Registrado";
+                        txtVeredicto.style.backgroundColor = "#ccc";
+                        txtVeredicto.style.color = "#333";
+                        listaDetalles.innerHTML = `
+                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado en la base nacional de internet.</li>
+                            <li class="pro" style="list-style:none; margin-top:15px; font-weight:bold; color:#ffb703; text-align:center; font-size:1.1rem;">📝 [PRÓXIMAMENTE: FORMULARIO DE ALTA CON IA] 📝</li>
+                        `;
                     }
+                    tarjeta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                })
+                .catch(error => {
+                    txtNombre.innerText = "Error de red al conectar el caño.";
+                    console.error(error);
                 });
-        }
+        });
     </script>
 </body>
 </html>
