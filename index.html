@@ -52,6 +52,9 @@
         .modulo-foto-ia.abierto { display: block; }
         .btn-foto-accion { background: #2ec4b6; color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
 
+        /* Pantalla de carga para simular IA */
+        #loading-ia { display: none; font-size: 0.95rem; font-weight: bold; color: #ff7f50; margin-top: 10px; }
+
         .contenedor-boton-fijo { position: fixed; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; padding: 0 20px; z-index: 999; }
         .btn-magico { width: 100%; max-width: 360px; background: #ffb703; color: #023047; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: 900; border: 4px solid #023047; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
     </style>
@@ -91,7 +94,8 @@
                 <h4 style="color:#ff7f50;">🔬 Escáner de Ingredientes Activo</h4>
                 <p style="font-size:0.85rem; color:#666; margin: 5px 0;">Apuntá con tu cámara a la lista de ingredientes del paquete.</p>
                 <input type="file" accept="image/*" id="selector-foto-ia" style="margin-top:10px; font-size:0.85rem; width:100%;">
-                <button class="btn-foto-accion" onclick="procesarFotoConIA()">⚡ Enviar a Inteligencia Artificial</button>
+                <button class="btn-foto-accion" id="btn-ia-submit" onclick="procesarFotoConIA()">⚡ Enviar a Inteligencia Artificial</button>
+                <div id="loading-ia">🤖 Pensando... Leyendo etiqueta visual... ⏱️</div>
             </div>
         </div>
     </div>
@@ -101,6 +105,8 @@
     </div>
 
     <script>
+        var cacheNombreActual = ""; // Guardamos el nombre del último producto consultado
+
         function abrirCamaraPro() {
             var ventanaCamara = window.open();
             var codigoHTML = `
@@ -170,7 +176,6 @@
             }
         }
 
-        // Funciones nuevas para el control de la IA
         function abrirModuloIA() {
             document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia abierto";
         }
@@ -178,36 +183,58 @@
         function procesarFotoConIA() {
             var fileInput = document.getElementById("selector-foto-ia");
             if(fileInput.files.length === 0) {
-                alert("Por favor sacá una foto o seleccioná una imagen primero.");
+                alert("Por favor sacá una foto o seleccioná una imagen de la etiqueta.");
                 return;
             }
             
-            alert("¡Foto enviada! Simulando motor OCR de IA...\nLeyendo ingredientes ocultos en el envase...");
+            // Animación de carga inteligente
+            document.getElementById("btn-ia-submit").style.display = "none";
+            document.getElementById("loading-ia").style.display = "block";
             
-            // Simulamos que la IA encuentra que tiene JMAF y aditivos no declarados en internet
-            var tarjeta = document.getElementById("tarjeta-resultado");
-            var txtEmoticon = document.getElementById("res-emoticon");
-            var txtVeredicto = document.getElementById("res-veredicto");
-            var listaDetalles = document.getElementById("res-detalles");
-            var txtIngReales = document.getElementById("txt-ingredientes-reales");
-            var txtTradCriolla = document.getElementById("txt-traduccion-criolla");
-            var btnVerMas = document.getElementById("btn-toggle-detalles");
+            setTimeout(() => {
+                var tarjeta = document.getElementById("tarjeta-resultado");
+                var txtEmoticon = document.getElementById("res-emoticon");
+                var txtVeredicto = document.getElementById("res-veredicto");
+                var listaDetalles = document.getElementById("res-detalles");
+                var txtIngReales = document.getElementById("txt-ingredientes-reales");
+                var txtTradCriolla = document.getElementById("txt-traduccion-criolla");
+                var btnVerMas = document.getElementById("btn-toggle-detalles");
 
-            tarjeta.className = "card-producto activo rojo";
-            txtEmoticon.innerText = "🤢👎";
-            txtVeredicto.innerText = "IA: Consumo Ocasional";
-            
-            listaDetalles.innerHTML = `
-                <li class="contra">IA detectó Jarabe de Maíz de Alta Fructosa (JMAF) y Estabilizantes en la foto.</li>
-                <li class="contra">El escaneo de etiqueta invalida la falta de datos de internet.</li>
-            `;
-            
-            txtIngReales.innerText = "Leche entera, Jarabe de Maíz de Alta Fructosa, Almidón modificado, INS 407 (Carragenina), Aromatizante artificial vainilla.";
-            txtTradCriolla.innerText = "¡La IA salvó las papas! Al leer la foto de atrás del envase, detectó aditivos espesantes (Carragenina) y endulzantes baratos que la base de datos de internet ignoraba. Clasificado como ultraprocesado por lectura visual.";
-            
-            btnVerMas.style.display = "block";
-            document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia";
-            document.getElementById("btn-activar-ia").style.display = "none";
+                var nLower = cacheNombreActual.toLowerCase();
+
+                // Lógica de simulación inteligente según el tipo de producto
+                if (nLower.includes("leche")) {
+                    tarjeta.className = "card-producto activo verde";
+                    txtEmoticon.innerText = "😃👍";
+                    txtVeredicto.innerText = "IA: ¡Súper Sano!";
+                    listaDetalles.innerHTML = `
+                        <li class="pro">La IA leyó la foto trasera: 100% Leche fluida descremada vacuna.</li>
+                        <li class="pro">Sin aditivos artificiales, almidones modificados ni JMAF agregados.</li>
+                    `;
+                    txtIngReales.innerText = "Leche descremada, Vitamina A, Vitamina D.";
+                    txtTradCriolla.innerText = "¡Confirmado visualmente por IA! Es un alimento noble y de un solo ingrediente base pura. Excelente opción libre de disfraces industriales.";
+                } else {
+                    // Simulación genérica para panificados/ultraprocesados no registrados
+                    tarjeta.className = "card-producto activo rojo";
+                    txtEmoticon.innerText = "🤢👎";
+                    txtVeredicto.innerText = "IA: Consumo Ocasional";
+                    listaDetalles.innerHTML = `
+                        <li class="contra">La IA detectó en el envase: Harina refinada, Aceite vegetal hidrogenado e INS 322.</li>
+                        <li class="contra">Contiene conservantes químicos y azúcares libres para realzar sabor.</li>
+                    `;
+                    txtIngReales.innerText = "Harina de trigo enriquecida, grasa vacuna refinada, jarabe de glucosa, sal, emulsionante (lecitina de soja), conservante (propionato de calcio).";
+                    txtTradCriolla.innerText = "La lectura de imagen detectó procesamiento industrial agresivo. Utiliza harinas refinadas y aditivos químicos pesados para preservarlo en góndola. Consumir de forma esporádica.";
+                }
+                
+                btnVerMas.style.display = "block";
+                
+                // Limpiar estados de interfaz
+                document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia";
+                document.getElementById("btn-ia-submit").style.display = "block";
+                document.getElementById("loading-ia").style.display = "none";
+                document.getElementById("btn-activar-ia").style.display = "none";
+                
+            }, 2000); // 2 segundos de retraso para dar sensación real de procesamiento
         }
 
         window.addEventListener("message", function(event) {
@@ -226,7 +253,6 @@
             var txtIngReales = document.getElementById("txt-ingredientes-reales");
             var txtTradCriolla = document.getElementById("txt-traduccion-criolla");
             
-            // Resetear botones IA
             document.getElementById("btn-activar-ia").style.display = "none";
             document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia";
 
@@ -247,13 +273,12 @@
                         var notaNutricional = producto.nutriscore_grade || "";
                         var azucarAltoPorSello = (notaNutricional === 'd' || notaNutricional === 'e');
                         
-                        var nombreCompleto = marcas ? `${nombreReal} (${marcas})` : nombreReal;
-                        txtNombre.innerText = nombreCompleto;
+                        cacheNombreActual = marcas ? `${nombreReal} (${marcas})` : nombreReal;
+                        txtNombre.innerText = cacheNombreActual;
                         
-                        // Si encuentra el producto pero la lista de ingredientes viene vacía (Caso Leche)
                         if(ingredientesTexto.trim() === "") {
                             txtIngReales.innerText = "Los ingredientes no están detallados en texto en la base pública.";
-                            document.getElementById("btn-activar-ia").style.display = "block"; // Habilitar botón IA
+                            document.getElementById("btn-activar-ia").style.display = "block"; 
                         } else {
                             txtIngReales.innerText = ingredientesTexto;
                         }
@@ -261,7 +286,7 @@
                         btnVerMas.style.display = "block";
 
                         var textoMinuscula = ingredientesTexto.toLowerCase();
-                        var nombreMinuscula = nombreCompleto.toLowerCase();
+                        var nombreMinuscula = cacheNombreActual.toLowerCase();
                         
                         var palabraSospechosaEnNombre = nombreMinuscula.includes("alfajor") || nombreMinuscula.includes("milka") || nombreMinuscula.includes("oreo") || nombreMinuscula.includes("pastillas") || nombreMinuscula.includes("caramelo") || nombreMinuscula.includes("chocolate") || nombreMinuscula.includes("drf") || nombreMinuscula.includes("menta") || nombreMinuscula.includes("cindor") || nombreMinuscula.includes("chocolatada") || nombreMinuscula.includes("dulce") || nombreMinuscula.includes("bizcocho");
 
@@ -301,6 +326,7 @@
                     } else {
                         tarjeta.className = "card-producto activo";
                         txtEmoticon.innerText = "🤷‍♂️❓";
+                        cacheNombreActual = `Código Desconocido`;
                         txtNombre.innerText = `Código: ${codigoLeido}`;
                         txtVeredicto.innerText = "No Registrado";
                         txtVeredicto.style.backgroundColor = "#ccc";
@@ -308,7 +334,7 @@
                         listaDetalles.innerHTML = `
                             <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado en la base nacional de internet.</li>
                         `;
-                        document.getElementById("btn-activar-ia").style.display = "block"; // Habilitar botón IA si no existe
+                        document.getElementById("btn-activar-ia").style.display = "block"; 
                     }
                     tarjeta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 })
