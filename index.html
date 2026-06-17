@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -83,33 +83,65 @@
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"><\/script>
                     <style>
-                        body { margin: 0; background: #000; font-family: sans-serif; color: white; text-align: center; }
+                        body { margin: 0; background: #000; font-family: sans-serif; color: white; text-align: center; overflow: hidden; }
                         #camara { width: 100vw; height: 75vh; position: relative; }
                         #camara video { width: 100%; height: 100%; object-fit: cover; }
-                        .linea { position: absolute; top: 50%; left: 5%; width: 90%; height: 2px; background: #e71d36; box-shadow: 0 0 8px #e71d36; }
-                        .info { padding: 20px; font-size: 1.2rem; font-weight: bold; background: #ffb703; color: #023047; }
+                        
+                        /* CAJA DE ENFOQUE (ESTRATEGIA A) */
+                        .visor-enfoque { 
+                            position: absolute; 
+                            top: 50%; 
+                            left: 50%; 
+                            width: 280px; 
+                            height: 140px; 
+                            margin-top: -70px; 
+                            margin-left: -140px; 
+                            border: 4px solid #e71d36; 
+                            border-radius: 16px;
+                            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Sombra que oscurece el exterior */
+                            z-index: 10;
+                            pointer-events: none;
+                        }
+                        .linea-guia {
+                            position: absolute;
+                            top: 50%;
+                            left: 5%;
+                            width: 90%;
+                            height: 2px;
+                            background: #e71d36;
+                            box-shadow: 0 0 8px #e71d36;
+                        }
+                        .info { padding: 20px; font-size: 1.1rem; font-weight: bold; background: #ffb703; color: #023047; height: 25vh; }
                     </style>
                 </head>
                 <body>
-                    <div id="camara"><div class="linea"></div></div>
-                    <div class="info">🔍 Enfocá bien las líneas del código de barras...</div>
+                    <div id="camara">
+                        <!-- Cuadro de exclusión visual -->
+                        <div class="visor-enfoque">
+                            <div class="linea-guia"></div>
+                        </div>
+                    </div>
+                    <div class="info">🎯 Poné el código de barras ÚNICAMENTE adentro del recuadro rojo.</div>
                     <script>
                         Quagga.init({
-                            inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#camara'), constraints: { facingMode: "environment" } },
-                            decoder: { 
-                                // Configuramos estrictamente para códigos largos de góndola (EAN-13)
-                                readers: ["ean_reader"] 
-                            }
+                            inputStream: { 
+                                name: "Live", 
+                                type: "LiveStream", 
+                                target: document.querySelector('#camara'), 
+                                constraints: { facingMode: "environment" },
+                                // RESTRICCIÓN DE AREA: Solo procesa el centro de la pantalla (Estrategia A)
+                                area: {
+                                    top: "30%", right: "10%", left: "10%", bottom: "30%"
+                                }
+                            },
+                            decoder: { readers: ["ean_reader"] }
                         }, function(err) {
                             if (err) { alert("Error de cámara: " + err); return; }
                             Quagga.start();
                         });
                         Quagga.onDetected(function(data) {
                             var codigo = data.codeResult.code;
-                            
-                            // FILTRO ESTRICTO: Si leyó un código parcial de menos de 12 números, lo ignora y sigue buscando
                             if (codigo.length < 12) return; 
-                            
                             Quagga.stop();
                             window.opener.postMessage(codigo, "*");
                             window.close();
@@ -156,39 +188,43 @@
             fetch(`https://ar.openfoodfacts.org/api/v2/product/${codigoLeido}.json`)
                 .then(response => response.json())
                 .then(data => {
-                    // Validamos que el producto exista y que TENGA un nombre real cargado
                     if (data.status === 1 && data.product && data.product.product_name && data.product.product_name.trim() !== "") {
                         var producto = data.product;
                         var nombreReal = producto.product_name;
                         var marcas = producto.brands || "";
-                        var ingredientesTexto = producto.ingredients_text_es || producto.ingredients_text || "No declarados en la base pública.";
+                        var ingredientesTexto = producto.ingredients_text_es || producto.ingredients_text || "";
+                        
+                        var azucarAlto = (producto.nutriscore_grade === 'd' || producto.nutriscore_grade === 'e');
                         
                         txtNombre.innerText = marcas ? `${nombreReal} (${marcas})` : nombreReal;
-                        txtIngReales.innerText = ingredientesTexto;
+                        txtIngReales.innerText = ingredientesTexto || "Ingredientes no detallados en texto, pero detectado por perfil nutricional de sellos.";
                         btnVerMas.style.display = "block";
 
                         var textoMinuscula = ingredientesTexto.toLowerCase();
+                        
                         var tieneJMAF = textoMinuscula.includes("jarabe") || textoMinuscula.includes("fructosa");
-                        var tieneAdit = textoMinuscula.includes("ins ") || textoMinuscula.includes("saboriz") || textoMinuscula.includes("resaltador");
+                        var tieneAdit = textoMinuscula.includes("ins ") || textoMinuscula.includes("saboriz") || textoMinuscula.includes("resaltador") || textoMinuscula.includes("emulsionante") || textoMinuscula.includes("estabilizante") || textoMinuscula.includes("polirricinoleato") || textoMinuscula.includes("lecitina");
+                        var esBombaAzucar = textoMinuscula.includes("azúcar") || textoMinuscula.includes("azucar") || azucarAlto || textoMinuscula.includes("sacarosa");
+                        var tieneGrasasRaras = textoMinuscula.includes("palma") || textoMinuscula.includes("hidrogenada") || textoMinuscula.includes("interesterificada") || textoMinuscula.includes("refinada") || textoMinuscula.includes("caramel");
 
-                        if (tieneJMAF && tieneAdit) {
+                        if ((tieneJMAF || esBombaAzucar) && (tieneAdit || tieneGrasasRaras)) {
                             tarjeta.className = "card-producto activo rojo";
                             txtEmoticon.innerText = "🤢👎";
                             txtVeredicto.innerText = "¡Ojo! Consumo Ocasional";
                             listaDetalles.innerHTML = `
-                                <li class="contra">Contiene Jarabe de Maíz (JMAF) y aditivos químicos pesados.</li>
-                                <li class="contra">Ultraprocesado diseñado para generar adicción al sabor.</li>
+                                <li class="contra">Carga masiva de azúcares refinados como ingrediente principal.</li>
+                                <li class="contra">Contiene grasas industriales, emulsionantes o aditivos complejos.</li>
                             `;
-                            txtTradCriolla.innerText = "Este producto está altamente manipulado en laboratorio. El JMAF impacta directo en el hígado y los aditivos INS camuflan ingredientes de baja calidad para que sigan siendo ricos al paladar. Evitalo en el día a día.";
-                        } else if (tieneJMAF || tieneAdit) {
+                            txtTradCriolla.innerText = "Este producto es un ultraprocesado de manual. Está diseñado para durar meses en góndola gracias a aceites refinados (como el de palma) y estabilizantes. Al tener el azúcar al frente, genera picos de insulina muy rápidos. Guardalo solo para un gusto muy esporádico.";
+                        } else if (esBombaAzucar || tieneAdit || tieneGrasasRaras) {
                             tarjeta.className = "card-producto activo amarillo";
                             txtEmoticon.innerText = "🤔🔎 🤷‍♂️";
                             txtVeredicto.innerText = "Moderado / Intermedio";
                             listaDetalles.innerHTML = `
-                                <li class="contra">Tiene algunos componentes industriales en su receta.</li>
-                                <li class="pro">No es el peor de la góndola, pero leé la letra chica.</li>
+                                <li class="contra">Contiene agregados industriales para espesar o endulzar.</li>
+                                <li class="pro">Mejor opción que un ultraprocesado puro, pero con límites.</li>
                             `;
-                            txtTradCriolla.innerText = "Tiene un procesamiento moderado. Cuenta con agregados químicos o azúcares para estirar su duración en góndola. No es veneno, pero tampoco es un alimento natural. Consumilo con conciencia.";
+                            txtTradCriolla.innerText = "Tiene un procesamiento intermedio. Aunque no use jarabes químicos raros, abusa del azúcar blanca o de aditivos espesantes para lograr textura. Consumilo con moderación.";
                         } else {
                             tarjeta.className = "card-producto activo verde";
                             txtEmoticon.innerText = "😃👍";
@@ -197,10 +233,9 @@
                                 <li class="pro">Ingredientes limpios, nobles y reales. ¡Excelente!</li>
                                 <li class="pro">Pocos procesos encima. Combustible premium para tu cuerpo.</li>
                             `;
-                            txtTradCriolla.innerText = "¡Alimento real! Al leer la etiqueta se nota que son componentes que podrías tener en la cocina de tu casa. Sin químicos raros destinados a engañar a tus papilas gustativas.";
+                            txtTradCriolla.innerText = "¡Alimento noble! Al leer los componentes se nota que es comida de verdad, sin disfraces químicos destinados a engañar al paladar o extender artificialmente su vida útil.";
                         }
                     } else {
-                        // REBOTE DE SEGURIDAD: Código inválido, corto o sin datos reales
                         tarjeta.className = "card-producto activo";
                         txtEmoticon.innerText = "🤷‍♂️❓";
                         txtNombre.innerText = `Código: ${codigoLeido}`;
@@ -208,7 +243,7 @@
                         txtVeredicto.style.backgroundColor = "#ccc";
                         txtVeredicto.style.color = "#333";
                         listaDetalles.innerHTML = `
-                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado con datos reales en la base nacional.</li>
+                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado en la base nacional.</li>
                             <li class="pro" style="list-style:none; margin-top:15px; font-weight:bold; color:#ffb703; text-align:center; font-size:1.1rem;">✨ [PRÓXIMAMENTE: BOTÓN PARA DAR DE ALTA] ✨</li>
                         `;
                     }
@@ -222,4 +257,3 @@
     </script>
 </body>
 </html>
- 
