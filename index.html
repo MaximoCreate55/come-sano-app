@@ -7,12 +7,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Comic Sans MS', sans-serif; }
-        body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; padding-bottom: 120px; }
+        body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; padding-bottom: 140px; }
         
         .box { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
         h1 { font-size: 1.8rem; color: #d4a373; margin-bottom: 5px; }
         p { font-size: 1rem; color: #606c38; font-weight: bold; }
         
+        /* Entrada Manual para empaques curvos/difíciles */
+        .caja-manual { width: 100%; max-width: 400px; background: white; border-radius: 16px; padding: 12px; margin-bottom: 15px; border: 2px dashed #606c38; text-align: center; }
+        .input-codigo { padding: 8px; border-radius: 8px; border: 2px solid #ccc; width: 60%; font-size: 0.9rem; text-align: center; }
+        .btn-manual { background: #606c38; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
         /* Botón Ergonómico Abajo */
         .contenedor-boton-fijo { position: fixed; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; padding: 0 20px; z-index: 999; }
         .btn-magico { width: 100%; max-width: 360px; background: #ffb703; color: #023047; padding: 20px; border-radius: 20px; font-size: 1.3rem; font-weight: 900; border: 4px solid #023047; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
@@ -37,7 +42,6 @@
         .info-lista li.pro::before { content: "✨"; position: absolute; left: 0; }
         .info-lista li.contra::before { content: "⚠️"; position: absolute; left: 0; }
 
-        /* Botón Ver Más y Panel Desplegable */
         .btn-ver-mas { background: #023047; color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 0.9rem; }
         .panel-detalles { display: none; width: 100%; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #ccc; text-align: left; }
         .panel-detalles.abierto { display: block; }
@@ -50,6 +54,12 @@
     <div class="box">
         <h1>🥕 CómeSanoApp 🍅</h1>
         <p>Conocé lo que comés</p>
+    </div>
+
+    <div class="caja-manual">
+        <label style="font-size:0.85rem; color:#606c38; font-weight:bold; display:block; margin-bottom:5px;">¿Paquete curvo o difícil? Escribí el número:</label>
+        <input type="number" id="input-manual" class="input-codigo" placeholder="Ej: 7790580404611">
+        <button class="btn-manual" onclick="buscarCodigoManual()">Buscar</button>
     </div>
 
     <div class="grid-comparador">
@@ -101,31 +111,19 @@
                             z-index: 10;
                             pointer-events: none;
                         }
-                        .linea-guia {
-                            position: absolute;
-                            top: 50%;
-                            left: 5%;
-                            width: 90%;
-                            height: 2px;
-                            background: #e71d36;
-                            box-shadow: 0 0 8px #e71d36;
-                        }
+                        .linea-guia { position: absolute; top: 50%; left: 5%; width: 90%; height: 2px; background: #e71d36; box-shadow: 0 0 8px #e71d36; }
                         .info { padding: 20px; font-size: 1.1rem; font-weight: bold; background: #ffb703; color: #023047; height: 25vh; }
                     </style>
                 </head>
                 <body>
                     <div id="camara">
-                        <div class="visor-enfoque">
-                            <div class="linea-guia"></div>
-                        </div>
+                        <div class="visor-enfoque"><div class="linea-guia"></div></div>
                     </div>
                     <div class="info">🎯 Poné el código de barras ÚNICAMENTE adentro del recuadro rojo.</div>
                     <script>
                         Quagga.init({
                             inputStream: { 
-                                name: "Live", 
-                                type: "LiveStream", 
-                                target: document.querySelector('#camara'), 
+                                name: "Live", type: "LiveStream", target: document.querySelector('#camara'), 
                                 constraints: { facingMode: "environment" },
                                 area: { top: "30%", right: "10%", left: "10%", bottom: "30%" }
                             },
@@ -149,6 +147,15 @@
             ventanaCamara.document.close();
         }
 
+        function buscarCodigoManual() {
+            var num = document.getElementById("input-manual").value;
+            if (num.length >= 8) {
+                window.postMessage(num, "*");
+            } else {
+                alert("Por favor ingresá un número de código válido.");
+            }
+        }
+
         function togglePersiana() {
             var p = document.getElementById("persiana-ingredientes");
             var b = document.getElementById("btn-toggle-detalles");
@@ -163,7 +170,7 @@
 
         window.addEventListener("message", function(event) {
             var codigoLeido = event.data;
-            if (!codigoLeido) return;
+            if (!codigoLeido || typeof codigoLeido !== "string") return;
 
             var tarjeta = document.getElementById("tarjeta-resultado");
             var txtNombre = document.getElementById("res-nombre");
@@ -189,42 +196,45 @@
                         var marcas = producto.brands || "";
                         var ingredientesTexto = producto.ingredients_text_es || producto.ingredients_text || "";
                         
-                        // DOBLE CAPA DE SEGURIDAD: Miramos el Nutriscore / perfil de sellos del servidor
                         var notaNutricional = producto.nutriscore_grade || "";
                         var azucarAltoPorSello = (notaNutricional === 'd' || notaNutricional === 'e');
                         
-                        txtNombre.innerText = marcas ? `${nombreReal} (${marcas})` : nombreReal;
-                        txtIngReales.innerText = ingredientesTexto || "Los ingredientes de este lote no están tipificados en texto, pero el perfil del producto acusa altos niveles de azúcares/calorías.";
+                        var nombreCompleto = marcas ? `${nombreReal} (${marcas})` : nombreReal;
+                        txtNombre.innerText = nombreCompleto;
+                        txtIngReales.innerText = ingredientesTexto || "Los ingredientes no están tipificados en texto en la base pública, pero el perfil acusa agregados industriales.";
                         btnVerMas.style.display = "block";
 
                         var textoMinuscula = ingredientesTexto.toLowerCase();
+                        var nombreMinuscula = nombreCompleto.toLowerCase();
                         
+                        // DETECTOR DE PALABRAS TRAMPA EN EL NOMBRE (Parche para registros incompletos)
+                        var palabraSospechosaEnNombre = nombreMinuscula.includes("alfajor") || nombreMinuscula.includes("milka") || nombreMinuscula.includes("oreo") || nombreMinuscula.includes("pastillas") || nombreMinuscula.includes("caramelo") || nombreMinuscula.includes("chocolate");
+
                         var tieneJMAF = textoMinuscula.includes("jarabe") || textoMinuscula.includes("fructosa");
                         var tieneAdit = textoMinuscula.includes("ins ") || textoMinuscula.includes("saboriz") || textoMinuscula.includes("resaltador") || textoMinuscula.includes("emulsionante") || textoMinuscula.includes("estabilizante") || textoMinuscula.includes("polirricinoleato") || textoMinuscula.includes("lecitina") || textoMinuscula.includes("espesante");
-                        var esBombaAzucar = textoMinuscula.includes("azúcar") || textoMinuscula.includes("azucar") || textoMinuscula.includes("sacarosa") || azucarAltoPorSello;
+                        var esBombaAzucar = textoMinuscula.includes("azúcar") || textoMinuscula.includes("azucar") || textoMinuscula.includes("sacarosa") || azucarAltoPorSello || palabraSospechosaEnNombre;
                         var tieneGrasasRaras = textoMinuscula.includes("palma") || textoMinuscula.includes("hidrogenada") || textoMinuscula.includes("interesterificada") || textoMinuscula.includes("refinada") || textoMinuscula.includes("caramel") || textoMinuscula.includes("crema");
 
-                        // CLASIFICADOR CRUZADO TEXTO + SELLO
-                        if (azucarAltoPorSello || ((tieneJMAF || esBombaAzucar) && (tieneAdit || tieneGrasasRaras))) {
+                        if (azucarAltoPorSello || ((tieneJMAF || esBombaAzucar) && (tieneAdit || tieneGrasasRaras)) || (palabraSospechosaEnNombre && ingredientesTexto === "")) {
                             // ROJO
                             tarjeta.className = "card-producto activo rojo";
                             txtEmoticon.innerText = "🤢👎";
                             txtVeredicto.innerText = "¡Ojo! Consumo Ocasional";
                             listaDetalles.innerHTML = `
-                                <li class="contra">Advertencia por exceso de azúcares, grasas o calorías.</li>
-                                <li class="contra">Producto procesado con agregados industriales pesados.</li>
+                                <li class="contra">Advertencia por perfil de golosina o exceso de azúcares refinados.</li>
+                                <li class="contra">Contiene grasas trans, aceites industriales o aditivos de sabor.</li>
                             `;
-                            txtTradCriolla.innerText = "¡Atención! Aunque la base de datos a veces no tenga el texto de los ingredientes escrito a mano, el perfil nutricional oficial confirma que este producto supera los límites saludables de azúcares o grasas refinadas. Es un ultraprocesado lácteo, ideal para consumir de forma muy medida.";
+                            txtTradCriolla.innerText = "Este producto está clasificado como ultraprocesado/golosina. Ya sea por su nombre oficial o por su registro de sellos, queda en evidencia que es una bomba de azúcares refinados y grasas modificadas para el paladar. Consumilo de forma muy medida.";
                         } else if (esBombaAzucar || tieneAdit || tieneGrasasRaras) {
                             // AMARILLO
                             tarjeta.className = "card-producto activo amarillo";
                             txtEmoticon.innerText = "🤔🔎 🤷‍♂️";
                             txtVeredicto.innerText = "Moderado / Intermedio";
                             listaDetalles.innerHTML = `
-                                <li class="contra">Contiene agregados industriales para dar consistencia o dulzor.</li>
-                                <li class="pro">Mejor perfil que un ultraprocesado puro, pero para consumir con control.</li>
+                                <li class="contra">Contiene agregados industriales para consistencia o dulzor.</li>
+                                <li class="pro">Mejor que un ultraprocesado puro, pero requiere control de porción.</li>
                             `;
-                            txtTradCriolla.innerText = "Tiene un procesamiento intermedio. Suele incorporar azúcares refinados o espesantes para estabilizar el lácteo en la góndola. No es dañino para consumos esporádicos, pero no reemplaza a un alimento natural.";
+                            txtTradCriolla.innerText = "Tiene un procesamiento intermedio. Incorpora azúcares o aditivos comunes de la industria para mantener el sabor y la conservación en la góndola. No es dañino para porciones chicas.";
                         } else {
                             // VERDE
                             tarjeta.className = "card-producto activo verde";
@@ -232,11 +242,12 @@
                             txtVeredicto.innerText = "¡Súper Sano!";
                             listaDetalles.innerHTML = `
                                 <li class="pro">Ingredientes limpios, nobles y de perfil natural. ¡Aprobado!</li>
-                                <li class="pro">Sin excesos de azúcares ocultos ni aditivos extraños.</li>
+                                <li class="pro">Sin excesos de azúcares refinados ni químicos ocultos.</li>
                             `;
-                            txtTradCriolla.innerText = "¡Alimento noble! Sus componentes y perfil nutricional están balanceados, sin excesos químicos ni azúcares destinados a alterar artificialmente el producto.";
+                            txtTradCriolla.innerText = "¡Alimento noble! Sus componentes están balanceados y cercanos a la comida real de cocina, sin trampas de laboratorio para generar dependencia de sabor.";
                         }
                     } else {
+                        // NO REGISTRADO
                         tarjeta.className = "card-producto activo";
                         txtEmoticon.innerText = "🤷‍♂️❓";
                         txtNombre.innerText = `Código: ${codigoLeido}`;
@@ -244,7 +255,7 @@
                         txtVeredicto.style.backgroundColor = "#ccc";
                         txtVeredicto.style.color = "#333";
                         listaDetalles.innerHTML = `
-                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado con datos reales en la base nacional.</li>
+                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado en la base nacional.</li>
                             <li class="pro" style="list-style:none; margin-top:15px; font-weight:bold; color:#ffb703; text-align:center; font-size:1.1rem;">✨ [PRÓXIMAMENTE: BOTÓN PARA DAR DE ALTA] ✨</li>
                         `;
                     }
