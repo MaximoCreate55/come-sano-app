@@ -6,60 +6,52 @@
     <title>CómeSanoApp</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Comic Sans MS', sans-serif; }
-        body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; padding-bottom: 120px; }
-        .box { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
-        .caja-manual { width: 100%; max-width: 400px; background: white; border-radius: 16px; padding: 12px; margin-bottom: 15px; border: 2px solid #d4a373; text-align: center; }
-        .input-codigo { padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 60%; }
-        .btn-manual { background: #023047; color: white; padding: 10px; border: none; border-radius: 10px; }
-        
-        .card-producto, .modal-alta { display: none; background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 20px; border: 3px solid #ccc; flex-direction: column; align-items: center; }
-        .activo { display: flex; }
-        
-        .btn-magico { position: fixed; bottom: 20px; width: 360px; background: #ffb703; padding: 20px; border-radius: 20px; font-weight: 900; border: 4px solid #023047; cursor:pointer; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #fdfaf0; min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; }
+        .box { background: white; padding: 20px; border-radius: 20px; border: 3px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
+        .caja-manual { width: 100%; max-width: 400px; background: white; padding: 15px; border-radius: 16px; border: 2px solid #d4a373; margin-bottom: 20px; display: flex; gap: 5px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+        .btn-manual { background: #023047; color: white; padding: 10px; border: none; border-radius: 8px; }
+        .card-producto { width: 100%; max-width: 400px; padding: 20px; border-radius: 20px; background: white; border: 3px solid #ccc; display: none; text-align: center; }
+        .modal-alta { display: none; width: 100%; max-width: 400px; background: #fff5f5; padding: 20px; border-radius: 20px; border: 2px solid #e71d36; margin-top: 15px; }
+        .btn-grande { position: fixed; bottom: 20px; width: 90%; max-width: 360px; background: #ffb703; padding: 20px; border-radius: 20px; font-size: 1.2rem; font-weight: 900; border: 3px solid #023047; }
     </style>
 </head>
 <body>
 
     <div class="box"><h1>🥕 CómeSanoApp 🍅</h1></div>
-
     <div class="caja-manual">
-        <input type="number" id="input-manual" class="input-codigo" placeholder="Código de barras...">
+        <input type="number" id="input-manual" placeholder="Código...">
         <button class="btn-manual" onclick="buscarManual()">Buscar</button>
     </div>
 
-    <div id="resultado-area" class="card-producto">
-        <div id="res-nombre" style="font-weight:bold; margin-bottom:10px;"></div>
-        <div id="res-detalle"></div>
-        <button id="btn-alta" style="display:none; background:#d4a373; color:white; padding:10px; border-radius:10px; border:none; margin-top:10px;" onclick="mostrarAlta()">➕ DAR DE ALTA PRODUCTO</button>
+    <div id="res-card" class="card-producto">
+        <h2 id="res-nombre"></h2>
+        <div id="res-msg" style="margin:15px 0;"></div>
+        <button id="btn-alta" style="display:none; background:#d4a373; color:white; padding:12px; border:none; border-radius:10px;" onclick="mostrarAlta()">➕ DAR DE ALTA</button>
     </div>
 
     <div id="modal-alta" class="modal-alta">
         <h3>📝 Registrar Producto</h3>
-        <input type="text" id="alta-nom" placeholder="Nombre">
-        <textarea id="alta-ing" placeholder="Ingredientes"></textarea>
-        <button onclick="guardarAlta()" style="background:#2ec4b6; color:white; padding:10px; width:100%; border:none; border-radius:10px;">Registrar</button>
+        <input type="text" id="alta-nom" placeholder="Nombre" style="width:100%; margin:5px 0;">
+        <textarea id="alta-ing" placeholder="Ingredientes" style="width:100%; margin:5px 0;"></textarea>
+        <button onclick="guardarAlta()" style="background:#2ec4b6; color:white; padding:10px; width:100%; border:none;">Registrar</button>
     </div>
 
-    <button class="btn-magico" onclick="abrirCamaraPro()">📷 ¡ESCANEAR!</button>
+    <button class="btn-grande" onclick="abrirCamara()">📷 ¡ESCANEAR!</button>
 
     <script>
-        function abrirCamaraPro() {
-            var v = window.open("", "_blank", "width=400,height=600");
-            v.document.write(`<html><body><div id="camara"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"><\/script><script>Quagga.init({inputStream:{type:"LiveStream",target:document.querySelector('#camara'),constraints:{facingMode:"environment"}},decoder:{readers:["ean_reader"]}},(err)=>{if(!err)Quagga.start()});Quagga.onDetected((d)=>{var c=d.codeResult.code;if(c.length>=8){window.opener.postMessage(c,"*");window.close();}})<\/script></body></html>`);
+        function abrirCamara() {
+            var v = window.open("", "_blank", "width=600,height=800");
+            v.document.write(`<html><head><style>body{margin:0;background:black;display:flex;justify-content:center;align-items:center;height:100vh;} #camara{width:100%;height:100%;} .visor{position:absolute;width:250px;height:120px;border:3px solid red;z-index:99;}</style></head><body><div id="camara"><div class="visor"></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"><\/script><script>Quagga.init({inputStream:{type:"LiveStream",target:document.querySelector('#camara'),constraints:{facingMode:"environment"}},decoder:{readers:["ean_reader"]}},(e)=>{if(!e)Quagga.start()});Quagga.onDetected((d)=>{if(d.codeResult.code.length>=8){window.opener.postMessage(d.codeResult.code,"*");window.close();}})<\/script></body></html>`);
         }
 
-        function buscarManual() {
-            var c = document.getElementById("input-manual").value;
-            procesarCodigo(c);
-        }
+        window.addEventListener("message", (e) => { procesar(e.data); });
 
-        window.addEventListener("message", (e) => {
-            if(e.data) procesarCodigo(e.data);
-        });
+        function buscarManual() { procesar(document.getElementById('input-manual').value); }
 
-        function procesarCodigo(codigo) {
-            document.getElementById('resultado-area').className = "card-producto activo";
+        function procesar(codigo) {
+            document.getElementById('res-card').className = "card-producto activo";
             document.getElementById('res-nombre').innerText = "Buscando...";
             document.getElementById('btn-alta').style.display = "none";
             document.getElementById('modal-alta').className = "modal-alta";
@@ -69,16 +61,17 @@
                 .then(data => {
                     if (data.status === 1 && data.product) {
                         document.getElementById('res-nombre').innerText = data.product.product_name;
-                        document.getElementById('res-detalle').innerText = "¡Producto encontrado!";
+                        document.getElementById('res-msg').innerText = "✅ Producto encontrado.";
                     } else {
                         document.getElementById('res-nombre').innerText = "No encontrado";
+                        document.getElementById('res-msg').innerText = "Este código no figura en la base nacional.";
                         document.getElementById('btn-alta').style.display = "block";
                     }
                 });
         }
 
         function mostrarAlta() { document.getElementById('modal-alta').className = "modal-alta activo"; }
-        function guardarAlta() { alert("Guardado localmente!"); location.reload(); }
+        function guardarAlta() { alert("Registrado!"); location.reload(); }
     </script>
 </body>
 </html>
