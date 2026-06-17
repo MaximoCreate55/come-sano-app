@@ -60,7 +60,6 @@
             
             <ul class="info-lista" id="res-detalles"></ul>
 
-            <!-- Sección Ver Más -->
             <button class="btn-ver-mas" id="btn-toggle-detalles" onclick="togglePersiana()" style="display:none;">👁️ Ver Letra Chica</button>
             <div class="panel-detalles" id="persiana-ingredientes">
                 <h4>🔬 Ingredientes Reales:</h4>
@@ -93,19 +92,23 @@
                 </head>
                 <body>
                     <div id="camara"><div class="linea"></div></div>
-                    <div class="info">🔍 Enfocá bien el código de barras de fondo...</div>
+                    <div class="info">🔍 Enfocá bien las líneas del código de barras...</div>
                     <script>
                         Quagga.init({
                             inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#camara'), constraints: { facingMode: "environment" } },
-                            decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader"] }
+                            decoder: { 
+                                // Configuramos estrictamente para códigos largos de góndola (EAN-13)
+                                readers: ["ean_reader"] 
+                            }
                         }, function(err) {
                             if (err) { alert("Error de cámara: " + err); return; }
                             Quagga.start();
                         });
                         Quagga.onDetected(function(data) {
                             var codigo = data.codeResult.code;
-                            // CAPA 1 ANTI-FRUSTRACIÓN: Si es un código incompleto/corto, lo ignora y sigue buscando
-                            if (codigo.length < 8) return; 
+                            
+                            // FILTRO ESTRICTO: Si leyó un código parcial de menos de 12 números, lo ignora y sigue buscando
+                            if (codigo.length < 12) return; 
                             
                             Quagga.stop();
                             window.opener.postMessage(codigo, "*");
@@ -145,7 +148,6 @@
             var txtIngReales = document.getElementById("txt-ingredientes-reales");
             var txtTradCriolla = document.getElementById("txt-traduccion-criolla");
 
-            // Reseteamos estados
             tarjeta.className = "card-producto activo";
             txtNombre.innerText = "Buscando en góndola digital...";
             btnVerMas.style.display = "none";
@@ -154,10 +156,10 @@
             fetch(`https://ar.openfoodfacts.org/api/v2/product/${codigoLeido}.json`)
                 .then(response => response.json())
                 .then(data => {
-                    // CAPA 2: Identifica si la lectura fue buena pero el código REALMENTE no existe
-                    if (data.status === 1 && data.product) {
+                    // Validamos que el producto exista y que TENGA un nombre real cargado
+                    if (data.status === 1 && data.product && data.product.product_name && data.product.product_name.trim() !== "") {
                         var producto = data.product;
-                        var nombreReal = producto.product_name || "Producto Encontrado";
+                        var nombreReal = producto.product_name;
                         var marcas = producto.brands || "";
                         var ingredientesTexto = producto.ingredients_text_es || producto.ingredients_text || "No declarados en la base pública.";
                         
@@ -169,9 +171,7 @@
                         var tieneJMAF = textoMinuscula.includes("jarabe") || textoMinuscula.includes("fructosa");
                         var tieneAdit = textoMinuscula.includes("ins ") || textoMinuscula.includes("saboriz") || textoMinuscula.includes("resaltador");
 
-                        // CLASIFICADOR Y ORDEN DE EMOJIS CORREGIDO (CARITA PRIMERO, MANO DESPUÉS)
                         if (tieneJMAF && tieneAdit) {
-                            // ROJO
                             tarjeta.className = "card-producto activo rojo";
                             txtEmoticon.innerText = "🤢👎";
                             txtVeredicto.innerText = "¡Ojo! Consumo Ocasional";
@@ -181,7 +181,6 @@
                             `;
                             txtTradCriolla.innerText = "Este producto está altamente manipulado en laboratorio. El JMAF impacta directo en el hígado y los aditivos INS camuflan ingredientes de baja calidad para que sigan siendo ricos al paladar. Evitalo en el día a día.";
                         } else if (tieneJMAF || tieneAdit) {
-                            // AMARILLO - NUEVO GESTO EMOJI SIN LA SEÑA CONFUSA
                             tarjeta.className = "card-producto activo amarillo";
                             txtEmoticon.innerText = "🤔🔎 🤷‍♂️";
                             txtVeredicto.innerText = "Moderado / Intermedio";
@@ -191,7 +190,6 @@
                             `;
                             txtTradCriolla.innerText = "Tiene un procesamiento moderado. Cuenta con agregados químicos o azúcares para estirar su duración en góndola. No es veneno, pero tampoco es un alimento natural. Consumilo con conciencia.";
                         } else {
-                            // VERDE
                             tarjeta.className = "card-producto activo verde";
                             txtEmoticon.innerText = "😃👍";
                             txtVeredicto.innerText = "¡Súper Sano!";
@@ -202,7 +200,7 @@
                             txtTradCriolla.innerText = "¡Alimento real! Al leer la etiqueta se nota que son componentes que podrías tener en la cocina de tu casa. Sin químicos raros destinados a engañar a tus papilas gustativas.";
                         }
                     } else {
-                        // CÓDIGO CORRECTO PERO NO EXISTE EN LA BASE DE DATOS
+                        // REBOTE DE SEGURIDAD: Código inválido, corto o sin datos reales
                         tarjeta.className = "card-producto activo";
                         txtEmoticon.innerText = "🤷‍♂️❓";
                         txtNombre.innerText = `Código: ${codigoLeido}`;
@@ -210,7 +208,7 @@
                         txtVeredicto.style.backgroundColor = "#ccc";
                         txtVeredicto.style.color = "#333";
                         listaDetalles.innerHTML = `
-                            <li class="contra" style="list-style:none; text-align:center;">¡Confirmado! Este código es válido pero el producto aún no fue subido por la comunidad argentina.</li>
+                            <li class="contra" style="list-style:none; text-align:center;">Este código no está registrado con datos reales en la base nacional.</li>
                             <li class="pro" style="list-style:none; margin-top:15px; font-weight:bold; color:#ffb703; text-align:center; font-size:1.1rem;">✨ [PRÓXIMAMENTE: BOTÓN PARA DAR DE ALTA] ✨</li>
                         `;
                     }
@@ -224,3 +222,4 @@
     </script>
 </body>
 </html>
+ 
