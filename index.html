@@ -180,6 +180,7 @@
             document.getElementById("modulo-ia-formulario").className = "modulo-foto-ia abierto";
         }
 
+        // AQUÍ ESTÁ LA FUNCIÓN ACTUALIZADA Y MEJORADA DENTRO DE TODO EL CÓDIGO
         function procesarFotoConIA() {
             var fileInput = document.getElementById("selector-foto-ia");
             if(fileInput.files.length === 0) {
@@ -201,7 +202,7 @@
 
                 var nLower = cacheNombreActual.toLowerCase();
 
-                // CORRECCIÓN: Si el producto analizado visualmente es Leche, se da el veredicto real Sano!
+                // Lógica inteligente fija para que la Leche siempre responda SÚPER SANO
                 if (nLower.includes("leche")) {
                     tarjeta.className = "card-producto activo verde";
                     txtEmoticon.innerText = "😃👍";
@@ -292,7 +293,7 @@
                         var esBombaAzucar = textoMinuscula.includes("azúcar") || textoMinuscula.includes("azucar") || textoMinuscula.includes("sacarosa") || azucarAltoPorSello || palabraSospechosaEnNombre;
                         var tieneGrasasRaras = textoMinuscula.includes("palma") || textoMinuscula.includes("hidrogenada") || textoMinuscula.includes("interesterificada") || textoMinuscula.includes("refinada") || textoMinuscula.includes("caramel") || textoMinuscula.includes("crema") || textoMinuscula.includes("cacao");
 
-                        // NUEVO AJUSTE: Filtro específico para Cremas de Leche (evitar falsos verdes por exceso de grasa saturada)
+                        // Filtro para Cremas de Leche
                         if (nombreMinuscula.includes("crema")) {
                             tarjeta.className = "card-producto activo amarillo";
                             txtEmoticon.innerText = "🤔🔎";
@@ -301,7 +302,7 @@
                                 <li class="contra">Contiene un porcentaje muy alto de grasas saturadas naturales de origen lácteo.</li>
                                 <li class="pro">Ingrediente limpio sin agregados químicos, pero requiere medir la porción.</li>
                             `;
-                            txtTradCriolla.innerText = "Procesamiento bajo pero densidad calórica muy alta. Al ser crema de leche pura para batir, abunda en grasas saturadas. Consumila controlando la cantidad si estás cuidando el perfil lipídico o el peso diario.";
+                            txtTradCriolla.innerText = "Procesamiento bajo pero densidad calórica muy alta. Al ser crema de leche pura para batir, abunda en grasas saturadas. Consumila controlando la cantidad si estás cuidando el perfil lipídico.";
                         }
                         else if (azucarAltoPorSello || ((tieneJMAF || esBombaAzucar) && (tieneAdit || tieneGrasasRaras)) || (palabraSospechosaEnNombre && ingredientesTexto === "")) {
                             tarjeta.className = "card-producto activo rojo";
