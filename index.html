@@ -86,7 +86,15 @@
             if (num) procesarBusqueda(num);
         }
 
-        window.addEventListener("message", (event) => { if(event.data.valor) procesarBusqueda(event.data.valor); });
+        // Corrección del receptor: extrae de forma segura tanto si viene manual (texto) como de la cámara (objeto)
+        window.addEventListener("message", (event) => { 
+            if (event.data) {
+                var codigoFinal = event.data.valor || event.data;
+                if (typeof codigoFinal === "string" || typeof codigoFinal === "number") {
+                    procesarBusqueda(codigoFinal);
+                }
+            }
+        });
 
         function procesarBusqueda(codigo) {
             var tarjeta = document.getElementById("tarjeta-resultado");
@@ -105,21 +113,24 @@
                         
                         document.getElementById("res-nombre").innerText = nombreCompleto;
                         
-                        // REGLA DE ORO: Lácteos siempre VERDE (Súper Sano)
-                        if ((nLower.includes("leche") || nLower.includes("yogurt") || nLower.includes("serenisima") || nLower.includes("lácteo")) && !nLower.includes("crema")) {
+                        // REGLA DE ORO MEJORADA: Lácteos nobles van a VERDE, pero si incluye "dulce" o "crema" quedan descartados
+                        if ((nLower.includes("leche") || nLower.includes("yogurt") || nLower.includes("serenisima") || nLower.includes("lácteo")) 
+                            && !nLower.includes("crema") 
+                            && !nLower.includes("dulce")) {
+                            
                             tarjeta.className = "card-producto activo verde";
                             document.getElementById("res-emoticon").innerText = "😃👍";
                             document.getElementById("res-veredicto").innerText = "¡SÚPER SANO!";
                             document.getElementById("res-veredicto").style.backgroundColor = "#2ec4b6";
                         } 
-                        // Regla para Cremas
+                        // Regla para Cremas (Amarillo)
                         else if (nLower.includes("crema")) {
                             tarjeta.className = "card-producto activo amarillo";
                             document.getElementById("res-emoticon").innerText = "🤔";
                             document.getElementById("res-veredicto").innerText = "MODERADO";
                             document.getElementById("res-veredicto").style.backgroundColor = "#ffb703";
                         }
-                        // Resto de los productos según Nutriscore
+                        // Resto de los productos según la base de datos (Arvejas, Duraznos, Dulce de leche, etc.)
                         else {
                             var grade = p.nutriscore_grade || "c";
                             if (grade === "a" || grade === "b") {
@@ -129,7 +140,7 @@
                                 document.getElementById("res-veredicto").style.backgroundColor = "#2ec4b6";
                             } else {
                                 tarjeta.className = "card-producto activo rojo";
-                                document.getElementById("res-emoticon").innerText = "🤢";
+                                document.getElementById("res-emoticon").innerText = "🥵";
                                 document.getElementById("res-veredicto").innerText = "OCASIONAL";
                                 document.getElementById("res-veredicto").style.backgroundColor = "#e71d36";
                             }
@@ -139,6 +150,7 @@
                         tarjeta.className = "card-producto activo";
                         document.getElementById("res-emoticon").innerText = "🤷‍♂️";
                         document.getElementById("res-veredicto").innerText = "DESCONOCIDO";
+                        document.getElementById("res-veredicto").style.backgroundColor = "#ccc";
                     }
                 });
         }
