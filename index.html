@@ -3,82 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CómeSanoApp - Alta de Producto</title>
+    <title>CómeSanoApp</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Comic Sans MS', sans-serif; }
         body { background: linear-gradient(135deg, #fefae0 0%, #e9edc9 100%); min-height: 100vh; display: flex; flex-direction: column; padding: 15px; align-items: center; padding-bottom: 120px; }
-        
         .box { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 4px solid #d4a373; width: 100%; max-width: 400px; text-align: center; margin-bottom: 20px; }
-        h1 { font-size: 1.8rem; color: #d4a373; margin-bottom: 5px; }
-        
-        /* Estilos de Formulario de Alta */
-        .modal-alta { display: none; background: white; padding: 25px; border-radius: 20px; border: 3px solid #d4a373; width: 100%; max-width: 400px; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .modal-alta.activo { display: block; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ccc; border-radius: 10px; }
-        .btn-enviar { background: #2ec4b6; color: white; padding: 15px; border: none; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
-        
-        /* Estilos anteriores reutilizados */
         .caja-manual { width: 100%; max-width: 400px; background: white; border-radius: 16px; padding: 12px; margin-bottom: 15px; border: 2px solid #d4a373; text-align: center; }
         .input-codigo { padding: 10px; border-radius: 10px; border: 2px solid #ccc; width: 60%; }
         .btn-manual { background: #023047; color: white; padding: 10px; border: none; border-radius: 10px; }
-        .card-producto { background: #ffffff; border-radius: 24px; padding: 24px; display: none; width: 100%; max-width: 400px; border: 4px solid #ccc; flex-direction: column; align-items: center; }
-        .card-producto.activo { display: flex; }
-        .btn-magico { position: fixed; bottom: 20px; width: 360px; background: #ffb703; padding: 20px; border-radius: 20px; font-weight: 900; border: 4px solid #023047; }
+        
+        .card-producto, .modal-alta { display: none; background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 20px; border: 3px solid #ccc; flex-direction: column; align-items: center; }
+        .activo { display: flex; }
+        
+        .btn-magico { position: fixed; bottom: 20px; width: 360px; background: #ffb703; padding: 20px; border-radius: 20px; font-weight: 900; border: 4px solid #023047; cursor:pointer; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <h1>🥕 CómeSanoApp 🍅</h1>
-    </div>
+    <div class="box"><h1>🥕 CómeSanoApp 🍅</h1></div>
 
-    <!-- Buscador Manual -->
     <div class="caja-manual">
         <input type="number" id="input-manual" class="input-codigo" placeholder="Código de barras...">
-        <button class="btn-manual" onclick="buscarCodigoManual()">Buscar</button>
+        <button class="btn-manual" onclick="buscarManual()">Buscar</button>
     </div>
 
-    <!-- Área de Resultados -->
     <div id="resultado-area" class="card-producto">
-        <div class="nombre-producto" id="res-nombre"></div>
-        <div id="res-veredicto-ui"></div>
-        <button id="btn-dar-alta" style="display:none; background:#d4a373; color:white; padding:10px; border:none; border-radius:10px; margin-top:10px;" onclick="abrirModalAlta()">➕ DAR DE ALTA PRODUCTO</button>
+        <div id="res-nombre" style="font-weight:bold; margin-bottom:10px;"></div>
+        <div id="res-detalle"></div>
+        <button id="btn-alta" style="display:none; background:#d4a373; color:white; padding:10px; border-radius:10px; border:none; margin-top:10px;" onclick="mostrarAlta()">➕ DAR DE ALTA PRODUCTO</button>
     </div>
 
-    <!-- Modal de Alta -->
     <div id="modal-alta" class="modal-alta">
         <h3>📝 Registrar Producto</h3>
-        <input type="text" id="alta-nombre" placeholder="Nombre del producto">
-        <textarea id="alta-ingredientes" placeholder="Ingredientes (o subí foto próximamente)"></textarea>
-        <button class="btn-enviar" onclick="enviarAlta()">Registrar en Base Local</button>
+        <input type="text" id="alta-nom" placeholder="Nombre">
+        <textarea id="alta-ing" placeholder="Ingredientes"></textarea>
+        <button onclick="guardarAlta()" style="background:#2ec4b6; color:white; padding:10px; width:100%; border:none; border-radius:10px;">Registrar</button>
     </div>
 
     <button class="btn-magico" onclick="abrirCamaraPro()">📷 ¡ESCANEAR!</button>
 
     <script>
-        function abrirModalAlta() {
-            document.getElementById('modal-alta').className = "modal-alta activo";
-            document.getElementById('alta-nombre').value = "";
-            document.getElementById('alta-ingredientes').value = "";
+        function abrirCamaraPro() {
+            var v = window.open("", "_blank", "width=400,height=600");
+            v.document.write(`<html><body><div id="camara"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"><\/script><script>Quagga.init({inputStream:{type:"LiveStream",target:document.querySelector('#camara'),constraints:{facingMode:"environment"}},decoder:{readers:["ean_reader"]}},(err)=>{if(!err)Quagga.start()});Quagga.onDetected((d)=>{var c=d.codeResult.code;if(c.length>=8){window.opener.postMessage(c,"*");window.close();}})<\/script></body></html>`);
         }
 
-        function enviarAlta() {
-            alert("¡Producto registrado en la base de datos local de CómeSanoApp! (A futuro enviaremos esto a la IA)");
-            document.getElementById('modal-alta').className = "modal-alta";
-            document.getElementById('resultado-area').className = "card-producto";
+        function buscarManual() {
+            var c = document.getElementById("input-manual").value;
+            procesarCodigo(c);
         }
-        
-        // [CÓDIGO DE ESCÁNER Y FETCH IGUAL AL ANTERIOR - Integrado en el despliegue de GitHub]
-        // (Para no sobrecargar, aquí va la lógica del botón alta...)
-        
-        function buscarCodigoManual() {
-            var num = document.getElementById("input-manual").value;
-            // ... (Lógica de búsqueda igual a la anterior)
-            // Si el fetch devuelve 404, mostramos el botón:
-            document.getElementById('btn-dar-alta').style.display = "block";
+
+        window.addEventListener("message", (e) => {
+            if(e.data) procesarCodigo(e.data);
+        });
+
+        function procesarCodigo(codigo) {
             document.getElementById('resultado-area').className = "card-producto activo";
+            document.getElementById('res-nombre').innerText = "Buscando...";
+            document.getElementById('btn-alta').style.display = "none";
+            document.getElementById('modal-alta').className = "modal-alta";
+
+            fetch(`https://ar.openfoodfacts.org/api/v2/product/${codigo}.json`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 1 && data.product) {
+                        document.getElementById('res-nombre').innerText = data.product.product_name;
+                        document.getElementById('res-detalle').innerText = "¡Producto encontrado!";
+                    } else {
+                        document.getElementById('res-nombre').innerText = "No encontrado";
+                        document.getElementById('btn-alta').style.display = "block";
+                    }
+                });
         }
+
+        function mostrarAlta() { document.getElementById('modal-alta').className = "modal-alta activo"; }
+        function guardarAlta() { alert("Guardado localmente!"); location.reload(); }
     </script>
 </body>
 </html>
